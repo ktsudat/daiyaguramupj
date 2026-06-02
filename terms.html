@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>マニュアル・Q&A｜AIダイヤグラム作成ツール｜スジ屋</title>
+<title>利用規約・免責事項｜ダイヤグラム作成ツール｜スジ屋</title>
 <link rel="icon" href="image/001.png" type="image/png">
 
 <style>
-/* ===== THEMES (index.htmlと完全統一) ===== */
+/* ===== THEMES (共通統一スタイル) ===== */
 :root {
   --accent: #0056b3; 
   --accent-dim: rgba(0, 86, 179, 0.1);
@@ -17,14 +17,12 @@
   --accent: #4f8ef5; --accent-dim: rgba(79,142,245,0.15);
   --text: #ffffff; --text2: #aaaaaa; --text3: #777777;
   --border: #333333; --border2: #444444;
-  --red: #e57373;
 }
 [data-theme="light"] {
   --bg: #f8fafc; --bg2: #ffffff; --bg3: #f1f5f9; --bg4: #e2e8f0;
   --accent: #0056b3; --accent-dim: rgba(0,86,179,0.08);
   --text: #222222; --text2: #555555; --text3: #888888;
   --border: #dddddd; --border2: #cccccc;
-  --red: #cc0000;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; border-radius: 0 !important; }
@@ -95,28 +93,15 @@ header {
 }
 .mobile-nav a.active, .mobile-nav a:hover { color: var(--accent); border-left-color: var(--accent); background: var(--bg3); }
 
-/* ===== MAIN (MANUAL CONTENT) ===== */
+/* ===== MAIN CONTENT ===== */
 main { max-width: 900px; margin: 120px auto 60px; padding: 0 4%; flex: 1; }
 
 h1 { font-size: clamp(24px, 4vw, 32px); font-weight: 800; margin-bottom: 30px; border-bottom: 3px solid var(--accent); padding-bottom: 10px; }
 h2 { font-size: 20px; font-weight: 700; margin: 40px 0 20px; padding-left: 12px; border-left: 5px solid var(--accent); color: var(--text); }
-h3 { font-size: 16px; font-weight: 700; margin: 24px 0 10px; color: var(--accent); }
 
-p { margin-bottom: 16px; color: var(--text2); font-weight: 500; }
-ul, ol { margin-bottom: 24px; padding-left: 24px; color: var(--text2); }
+p { margin-bottom: 16px; color: var(--text2); font-weight: 500; text-align: justify; }
+ul { margin-bottom: 24px; padding-left: 24px; color: var(--text2); }
 li { margin-bottom: 8px; font-weight: 500; }
-
-blockquote {
-  background: var(--bg3); border-left: 4px solid var(--border2); padding: 16px; margin-bottom: 24px; font-size: 14px;
-}
-blockquote p { margin-bottom: 0; }
-
-/* TABLE FOR SHORTCUTS */
-.manual-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 15px; }
-.manual-table th, .manual-table td { padding: 12px 16px; border: 1px solid var(--border); text-align: left; }
-.manual-table th { background: var(--bg3); font-weight: 700; color: var(--text); width: 30%; }
-.manual-table td { background: var(--bg2); }
-
 
 /* ========================================================
    FOOTER (おおいた地域交通見える化ボード完全統一デザイン)
@@ -128,6 +113,7 @@ blockquote p { margin-bottom: 0; }
   border-top: 1px solid var(--border); 
   margin-top: 80px; 
 }
+/* ダークモードの時も違和感がないように背景色を追従 */
 [data-theme="dark"] .site-footer { 
   background-color: #1e1e1e; 
   border-top-color: var(--border);
@@ -135,6 +121,7 @@ blockquote p { margin-bottom: 0; }
 
 .footer-container { max-width: 1200px; margin: 0 auto; }
 
+/* 見える化ボード仕様のグリッドシステム */
 .footer-grid { 
   display: grid; 
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
@@ -142,6 +129,7 @@ blockquote p { margin-bottom: 0; }
   margin-bottom: 40px; 
 }
 
+/* 見える化ボード仕様の見出しスタイル */
 .footer-col h4 { 
   font-size: 16px; 
   font-weight: 700; 
@@ -155,6 +143,7 @@ blockquote p { margin-bottom: 0; }
 .footer-col ul { list-style: none; }
 .footer-col ul li { margin-bottom: 10px; }
 
+/* 見える化ボード仕様のホバー時スライドアニメーション */
 .footer-col ul li a { 
   color: var(--text); 
   text-decoration: none; 
@@ -165,9 +154,10 @@ blockquote p { margin-bottom: 0; }
 }
 .footer-col ul li a:hover { 
   color: var(--accent); 
-  padding-left: 5px; 
+  padding-left: 5px; /* マウスを乗せると少し右にズレる演出 */
 }
 
+/* フッターボトムライン */
 .footer-bottom { 
   text-align: center; 
   border-top: 1px solid var(--border); 
@@ -176,6 +166,7 @@ blockquote p { margin-bottom: 0; }
   color: var(--text3); 
 }
 
+/* レスポンシブ対応 */
 @media (max-width: 768px) {
   .header-links { display: none; }
   .hamburger { display: flex; }
@@ -193,7 +184,6 @@ blockquote p { margin-bottom: 0; }
 }
 </style>
 
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
 </head>
@@ -202,12 +192,12 @@ blockquote p { margin-bottom: 0; }
 <header>
   <a href="index.html" class="logo">
     <div class="logo-mark"><svg viewBox="0 0 16 16"><polyline points="2,12 5,8 8,10 11,5 14,7"/><line x1="2" y1="14" x2="14" y2="14"/></svg></div>
-    <div>スジ屋<span>AIダイヤグラム作成ツール</span></div>
+    <div>スジ屋<span>ダイヤグラム作成ツール</span></div>
   </a>
   <div class="header-links">
     <a href="index.html">ホーム</a>
     <a href="diagram_fixed.html">ダイヤエディタ</a>
-    <a href="manual.html" class="active">マニュアル・Q&A</a>
+    <a href="manual.html">マニュアル・Q&A</a>
     <a href="terms.html" class="active">利用規約・免責事項</a>
     <div class="theme-group" id="themeGroup">
       <div class="theme-dot" data-t="dark" title="ダークモード" onclick="setTheme('dark')"></div>
@@ -222,7 +212,7 @@ blockquote p { margin-bottom: 0; }
 <nav class="mobile-nav" id="mobileNav">
   <a href="index.html">ホーム</a>
   <a href="diagram_fixed.html">ダイヤエディタ</a>
-  <a href="manual.html" class="active">マニュアル・Q&A</a>
+  <a href="manual.html">マニュアル・Q&A</a>
   <a href="terms.html" class="active">利用規約・免責事項</a>
   <div style="padding: 16px 6%; display:flex; gap:10px; border-top: 1px solid var(--border2); margin-top: 10px;">
     <span style="font-size:14px; font-weight:bold; color:var(--text2);">テーマ切替:</span>
@@ -232,70 +222,27 @@ blockquote p { margin-bottom: 0; }
 </nav>
 
 <main>
-  <h1>マニュアル・Q&A</h1>
-  <p>ダイヤ編集の基本操作方法、ダイヤ検証機能（衝突チェック）、および出力方法について解説します。</p>
+  <h1>利用規約・免責事項</h1>
+  <p>当サイト（ダイヤグラム作成ツール｜スジ屋）をご利用いただくにあたり、以下の規約および免責事項を必ずお読みください。本サイトを利用された場合、これらの内容に同意したものとみなします。</p>
 
-  <h2>1. 駅リストの管理と「単線・複線」の設定</h2>
-  <p>画面左側のメニュー（モバイル環境では ≡ ボタンで展開）の「駅リスト」から、路線の駅に関する設定を編集できます。</p>
+  <h2>1. 免責事項</h2>
+  <p>本サイトの情報を利用したこと、あるいは利用できなかったことにより生じたいかなる損害（直接的・間接的を問わず）、トラブル、不利益等について、作成者は一切の責任を負いかねます。</p>
+  <p>ご利用は利用者ご自身の責任において行ってください。</p>
+  <p>また、諸事情（システムの不具合や運営上の都合等）により、予告なく公開を停止・削除する場合があります。</p>
+
+  <h2>2. 禁止事項</h2>
+  <p>ユーザーは、本サイトの利用にあたり、以下に該当する行為を行ってはならないものとします。</p>
   <ul>
-    <li><strong>駅の追加・削除・並び替え:</strong> 下部の入力欄から駅を追加できます。「≡」をドラッグして順序変更、「✕」で駅の削除が可能です。</li>
-    <li><strong>単線・複線の切り替え:</strong> 駅と駅の間に表示されているボタン（「｜単線区間」または「‖複線区間」）をクリックすることで、その区間の線路構造を切り替えることができます。この設定は、後述する<strong>衝突チェック（ダイヤ検証）機能の判定基準</strong>として使用されます。</li>
+    <li>公序良俗に反する目的、またはその恐れのある行為での利用</li>
+    <li>本サイトのサーバーやネットワークの機能を破壊したり、妨害したりする行為</li>
+    <li>その他、作成者が不適切と判断する行為</li>
   </ul>
 
-  <h2>2. 時刻表の入力と便利機能</h2>
-  <p>「時刻表(下り)」「時刻表(上り)」タブにて、ダイヤの各時刻を打ち込みます。</p>
-  
-  <h3>時刻の自動整形</h3>
-  <p>「0600」や「1845」のように4桁の数字を連続で入力してEnterキーを押す（または別のセルに移動する）と、自動的に「06:00」「18:45」の形式に整形されます。</p>
+  <h2>3. プライバシーポリシー</h2>
+  <p>当サイトでは、Googleによるアクセス解析ツール「Googleアナリティクス」を使用しています。このデータは匿名で収集されており、個人を特定するものではありません。お使いのブラウザの設定でCookieを無効にすることで収集を拒否することが可能です。</p>
 
-  <h3>通過時刻の設定</h3>
-  <p>駅を通過する列車の時刻を表現する場合、<strong>「着時刻」のセルに通過する時間を入力し、「発時刻」のセルに「レ」を入力</strong>してください。これにより、実際の鉄道ダイヤと同じように通過時刻を表現でき、ダイヤグラムの描画にも正確に反映されます。（着発の両方に「レ」を入力すると、セルが上下で一体化し単一の通過マークになります。）</p>
-
-  <h3>後続一括シフト機能（連動）</h3>
-  <p>時刻表上部の「時刻変更時、後続もずらす」にチェックを入れた状態で任意の時刻を変更すると、<strong>その列車以降の駅の全時刻が自動的に同じ分数だけ進む／戻る</strong>ようになります。駅間の所要時間を保ったままスジ全体をずらす際に必須の機能です。</p>
-
-  <h3>特殊記号の入力</h3>
-  <p>セルを選択すると表示されるクイックメニュー、または設定したショートカットキーで記号を入力できます。</p>
-  <ul>
-    <li><strong>レ :</strong> 駅を「通過」する場合に使用します。</li>
-    <li><strong>|| :</strong> 他の路線を経由する場合などに使用します。</li>
-    <li><strong>＝ :</strong> 列車がその駅で終着、または途中止まりになる場合に使用します。</li>
-  </ul>
-
-  <h2>3. 衝突チェック機能（ダイヤ検証）</h2>
-  <p>エディタ上部ツールバーの<strong>「衝突チェック」</strong>のチェックボックスをオンにすると、作成したダイヤグラム上に物理的に矛盾・支障している箇所がないかを自動で検証し、警告を出します。</p>
-  <ul>
-    <li><strong>単線区間での判定:</strong> 上下線列車の「駅間でのすれ違い」、および同方向列車の「駅間での追い越し」を衝突として検知します。</li>
-    <li><strong>複線区間での判定:</strong> 上下線列車のすれ違いは正常運行として検知しません。同方向列車の「駅間での追い越し」のみを衝突として検知します。</li>
-  </ul>
-  <p>衝突が検知された場合、ダイヤグラム上の該当箇所に赤丸が表示され、画面右下に「どの駅間で、どの列車同士が支障しているか」のリストが警告ポップアップとして表示されます。</p>
-
-  <h2>4. AIモード切替スイッチ（準備中）</h2>
-  <p>ツールバー中央に設置されている「手動 / AIモード」のトグルスイッチは、今後のアップデートに向けた<strong>準備工事（モックアップ）</strong>です。<br>
-  現在は手動作成モードのみが利用可能ですが、将来的にはこのスイッチをオンにすることで、<strong>「沿線人口や流動データの自動解析による最適ダイヤの生成」</strong>や<strong>「ユーザーの要望を学習したダイヤの自動調整」</strong>機能などが解放される予定です。<br>※あくまで予定であり実装されない可能性もあります。</p>
-
-  <h2>5. ショートカットキー設定</h2>
-  <p>ツールバーの「設定」ボタンから、特殊記号の入力を任意のキーボードキーに割り当てることができます。デフォルトは以下の通りです。</p>
-  <table class="manual-table">
-    <tr><th>レ (通過)</th><td>R キー</td></tr>
-    <tr><th>|| (他線経由)</th><td>L キー</td></tr>
-    <tr><th>＝ (途中止まり)</th><td>- (マイナス) キー</td></tr>
-    <tr><th>空欄に戻す</th><td>Backspace / Delete キー</td></tr>
-  </table>
-
-  <h2>6. 出力機能とトラブルシューティング</h2>
-  <p>作成したデータは、ツールバー右側から各種形式で出力・保存できます。</p>
-  <ul>
-    <li><strong>保存 (DL):</strong> 編集中の全データを <code>.json</code> 形式でダウンロードします。次回「開く」ボタンから読み込むことで再編集が可能です。</li>
-    <li><strong>CSV出力:</strong> 時刻表データをExcel等で読み込み可能なCSV形式で出力します。</li>
-    <li><strong>画像保存 (PNG):</strong> 表示中の時刻表またはダイヤグラムを画像として保存します。</li>
-  </ul>
-
-  <blockquote>
-    <p><strong>【重要】画像出力（PNG）が機能しない・表示が崩れる場合</strong><br>
-    お使いのブラウザの設定や、路線データ（駅数・列車数）が極端に多い場合、画像生成処理が完了しないことがあります。<br>
-    その場合は、ツールバーの<strong>「印刷 / PDF」</strong>ボタン、またはブラウザ標準の印刷機能（<code>Ctrl + P</code> または <code>Cmd + P</code>）を実行し、送信先を「PDFに保存」にして出力してください。印刷用に最適化されたレイアウトで出力が可能です。</p>
-  </blockquote>
+  <h2>4. お問い合わせ</h2>
+  <p>お問い合わせは関連リンクにあります「おおいた地域交通見える化ボード」のこのサイトについてにあります、お問い合わせフォームからお願いします。</p>
 </main>
 
 <footer class="site-footer">
@@ -307,7 +254,7 @@ blockquote p { margin-bottom: 0; }
           <li><a href="index.html">ホーム</a></li>
           <li><a href="diagram_fixed.html">ダイヤエディタ</a></li>
           <li><a href="manual.html">マニュアル・Q&A</a></li>
-          <li><a href="terms.html">利用規約・免責事項</a></li>
+          <li><a href="terms.html" style="font-weight: 700; color: var(--accent);">利用規約・免責事項</a></li>
         </ul>
       </div>
 

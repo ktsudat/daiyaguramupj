@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ダイヤ編集エディタ | AIダイヤグラム作成ツール｜スジ屋</title>
+<link rel="icon" href="image/001.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -304,6 +305,7 @@ td[rowspan="2"] .time-input { height: 100%; min-height: 40px; }
     <a href="index.html">ホーム</a>
     <a href="diagram_fixed.html" class="active">ダイヤエディタ</a>
     <a href="manual.html">マニュアル・Q&A</a>
+    <a href="terms.html" class="active">利用規約・免責事項</a>
     <div class="theme-group">
       <div class="theme-dot" data-t="dark" title="ダークモード" onclick="setTheme('dark')"></div>
       <div class="theme-dot" data-t="light" title="ライトモード" onclick="setTheme('light')"></div>
@@ -419,7 +421,9 @@ td[rowspan="2"] .time-input { height: 100%; min-height: 40px; }
   </div>
   <div class="status-links">
     <a href="index.html">ホーム</a>
+    <a href="diagram_fixed.html">ダイヤエディタ</a>
     <a href="manual.html">マニュアル・Q&A</a>
+    <a href="terms.html" class="active">利用規約・免責事項</a>
   </div>
 </div>
 
@@ -1156,6 +1160,7 @@ function updateStatusBar(){
   document.getElementById('sb-trains').textContent='列車数: '+(project.trains||[]).length;
 }
 function renderAll(){ renderStations(); renderTimetables(); if(currentView==='diagram') drawDiagram(); }
+
 </script>
 </body>
 </html>

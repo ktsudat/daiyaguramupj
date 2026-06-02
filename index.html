@@ -3,8 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>AIダイヤグラム作成ツール｜スジ屋</title>
+<title>ダイヤグラム作成ツール｜スジ屋</title>
+<link rel="icon" href="image/001.png" type="image/png">
 <meta name="description" content="ブラウザで動く鉄道ダイヤ作成・編集ツール。入力データからダイヤグラム（スジ）を自動で描き出し、画像やPDFとして保存できます。">
+
+
 <style>
 /* ===== THEMES (Dark / Light Only) ===== */
 :root {
@@ -157,17 +160,65 @@ h1 em { font-style: normal; color: var(--accent); }
 .btn-sm.danger { background: transparent; border-color: transparent; }
 .btn-sm.danger:hover { color: var(--red); background: rgba(204,0,0,0.1); }
 
-/* フッター（下部タブ・免責事項） */
-footer { 
-  background: var(--bg2); border-top: 1px solid var(--border); 
-  padding: 40px 4% 20px; margin-top: auto;
+
+/* ========================================================
+   FOOTER (おおいた地域交通見える化ボード完全統一デザイン)
+   ======================================================== */
+.site-footer { 
+  background-color: #eeeeee; 
+  color: var(--text); 
+  padding: 60px 5% 20px; 
+  border-top: 1px solid var(--border); 
+  margin-top: 80px; 
 }
-.footer-inner { max-width: 1000px; margin: 0 auto; }
-.footer-nav { display: flex; gap: 20px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap; }
-.footer-nav a { color: var(--accent); text-decoration: none; font-weight: 700; font-size: 15px; }
-.footer-nav a:hover { text-decoration: underline; }
-.footer-disclaimer { font-size: 12px; color: var(--text3); line-height: 1.6; margin-bottom: 20px; text-align: center; }
-.footer-copyright { text-align: center; font-size: 12px; color: var(--text3); font-weight: 600; }
+[data-theme="dark"] .site-footer { 
+  background-color: #1e1e1e; 
+  border-top-color: var(--border);
+}
+
+.footer-container { max-width: 1200px; margin: 0 auto; }
+
+.footer-grid { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+  gap: 40px; 
+  margin-bottom: 40px; 
+}
+
+.footer-col h4 { 
+  font-size: 16px; 
+  font-weight: 700; 
+  margin-bottom: 20px; 
+  border-bottom: 2px solid var(--accent); 
+  padding-bottom: 10px; 
+  color: var(--accent); 
+  display: inline-block; 
+}
+
+.footer-col ul { list-style: none; }
+.footer-col ul li { margin-bottom: 10px; }
+
+.footer-col ul li a { 
+  color: var(--text); 
+  text-decoration: none; 
+  font-size: 14px; 
+  font-weight: 500; 
+  transition: 0.2s; 
+  display: inline-block;
+}
+.footer-col ul li a:hover { 
+  color: var(--accent); 
+  padding-left: 5px; 
+}
+
+.footer-bottom { 
+  text-align: center; 
+  border-top: 1px solid var(--border); 
+  padding-top: 20px; 
+  font-size: 12px; 
+  color: var(--text3); 
+}
+
 
 /* MODAL */
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; }
@@ -183,14 +234,28 @@ input[type=text] {
 input[type=text]:focus { border-color: var(--accent); background: var(--bg); }
 .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 32px; }
 
+/* RESPONSIVE */
 @media (max-width: 768px) {
   .header-links { display: none; }
   .hamburger { display: flex; }
   main { margin-top: 100px; }
   .cta-group { flex-direction: column; }
   .btn-primary, .btn-secondary { width: 100%; }
+
+  /* スマホ用フッター調整を追加 */
+  .site-footer { padding: 40px 6% 16px; margin-top: 50px; }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
+  .footer-col h4 { font-size: 14px; margin-bottom: 12px; }
+  .footer-col ul li a { font-size: 13px; }
+  .footer-bottom { font-size: 11px; padding-top: 14px; }
+}
+
+@media (max-width: 375px) {
+  .footer-grid { grid-template-columns: 1fr; }
 }
 </style>
+
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
 </head>
@@ -205,6 +270,7 @@ input[type=text]:focus { border-color: var(--accent); background: var(--bg); }
     <a href="index.html" class="active">ホーム</a>
     <a href="diagram_fixed.html">ダイヤエディタ</a>
     <a href="manual.html">マニュアル・Q&A</a>
+    <a href="terms.html" class="active">利用規約・免責事項</a>
     <div class="theme-group" id="themeGroup">
       <div class="theme-dot" data-t="dark" title="ダークモード" onclick="setTheme('dark')"></div>
       <div class="theme-dot" data-t="light" title="ライトモード" onclick="setTheme('light')"></div>
@@ -217,8 +283,9 @@ input[type=text]:focus { border-color: var(--accent); background: var(--bg); }
 
 <nav class="mobile-nav" id="mobileNav">
   <a href="index.html" class="active">ホーム</a>
-  <a href="diagram.html">ダイヤエディタ</a>
+  <a href="diagram_fixed.html">ダイヤエディタ</a>
   <a href="manual.html">マニュアル・Q&A</a>
+  <a href="terms.html" class="active">利用規約・免責事項</a>
   <div style="padding: 16px 6%; display:flex; gap:10px; border-top: 1px solid var(--border2); margin-top: 10px;">
     <span style="font-size:14px; font-weight:bold; color:var(--text2);">テーマ切替:</span>
     <div class="theme-dot" data-t="dark" onclick="setTheme('dark')" style="border-color:var(--text);"></div>
@@ -248,19 +315,30 @@ input[type=text]:focus { border-color: var(--accent); background: var(--bg); }
   </div>
 </main>
 
-<footer>
-  <div class="footer-inner">
-    <div class="footer-nav">
-      <a href="index.html">ホーム</a>
-      <a href="diagram_fixed.html">ダイヤエディタ</a>
-      <a href="manual.html">マニュアル・Q&A</a>
+<<footer class="site-footer">
+  <div class="footer-container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>メニュー</h4>
+        <ul>
+          <li><a href="index.html">ホーム</a></li>
+          <li><a href="diagram_fixed.html">ダイヤエディタ</a></li>
+          <li><a href="manual.html">マニュアル・Q&A</a></li>
+          <li><a href="terms.html">利用規約・免責事項</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>関連リンク</h4>
+        <ul>
+          <li><a href="https://ktsudat.github.io/mierukaPJ/" target="_blank" rel="noopener noreferrer">おおいた地域交通見える化ボード</a></li>
+          <li><a href="https://oudiasecond.seesaa.net/" target="_blank" rel="noopener noreferrer">OuDiaSecond（by：diagram_mania）</a></li>
+        </ul>
+      </div>
     </div>
-    <div class="footer-disclaimer">
-      【免責事項】本サイト（AIダイヤグラム作成ツール｜スジ屋）で提供している機能やマニュアル、システムから出力されるデータを含むすべてのコンテンツは、AI（人工知能）によって自動生成されたものです。情報の正確性・妥当性について保証するものではなく、本ツールの利用により生じたいかなる損害についても当方は一切の責任を負いかねます。<br>
-      お問い合わせは「おおいた地域交通見える化ボード」の「このサイトについて」ページよりお願いいたします。
-    </div>
-    <div class="footer-copyright">
-      &copy; 2026 AIダイヤグラム作成ツール｜スジ屋. All rights reserved.
+
+    <div class="footer-bottom">
+      <p>&copy; 2026 ダイヤグラム作成ツール｜スジ屋. All rights reserved.</p>
     </div>
   </div>
 </footer>
