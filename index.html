@@ -87,12 +87,17 @@ body {
   overflow: hidden;
   border-bottom: 2px solid var(--border);
 }
-
 .full-cover-area img {
   width: 100%;
   height: 100%;
-  object-fit: cover;       /* ★ contain から cover に変更して余白を撲滅！ */
-  object-position: center; /* ★ 画像の中央を基準に配置（見切れる場合も中央を残す） */
+  object-fit: cover;
+  object-position: center;
+  opacity: 0; /* 最初は透明にしておく */
+  transition: opacity 1.2s ease 0.2s; /* スプラッシュが消える時にじわっと表示 */
+}
+/* loadedクラスが付与されたら表紙を表示 */
+body.loaded .full-cover-area img {
+  opacity: 1;
 }
 
 /* ===== HEADER ===== */
@@ -294,19 +299,13 @@ input[type=text]:focus { border-color: var(--accent); background: var(--bg); }
 @media (max-width: 768px) {
   .header-links { display: none; }
   .hamburger { display: flex; }
-  main { margin-top: 40px; } /* 表紙画像との適切な隙間に調整 */
+  main { margin-top: 40px; } 
   .cta-group { flex-direction: column; }
   .btn-primary, .btn-secondary { width: 100%; }
 
-  /* ▼▼ ここから下を追加 ▼▼ */
-  .full-cover-area {
-    height: auto; /* スマホでは全画面(100vh)をやめて、画像本来の高さに合わせる */
-  }
-  .full-cover-area img {
-    height: auto;
-    object-fit: contain;
-    display: block;
-  }
+  /* スマホ版では表紙画像本来の高さで表示 */
+  .full-cover-area { height: auto; }
+  .full-cover-area img { object-fit: contain; display: block; }
 
   /* スマホ用フッター調整 */
   .site-footer { padding: 40px 6% 16px; margin-top: 50px; }
@@ -327,7 +326,7 @@ input[type=text]:focus { border-color: var(--accent); background: var(--bg); }
 <body data-theme="light">
 
 <div id="splashScreen">
-  <div class="splash-text">ダイヤ作成をもっと手軽に！</div>
+  <div class="splash-text">ダイヤ作成をもっと手軽に</div>
 </div>
 
 <header>
@@ -339,7 +338,7 @@ input[type=text]:focus { border-color: var(--accent); background: var(--bg); }
     <a href="index.html" class="active">ホーム</a>
     <a href="diagram_fixed.html">ダイヤエディタ</a>
     <a href="manual.html">マニュアル・Q&A</a>
-    <a href="terms.html" class="active">利用規約・免責事項</a>
+    <a href="terms.html">利用規約・免責事項</a>
     <div class="theme-group" id="themeGroup">
       <div class="theme-dot" data-t="dark" title="ダークモード" onclick="setTheme('dark')"></div>
       <div class="theme-dot" data-t="light" title="ライトモード" onclick="setTheme('light')"></div>
@@ -354,7 +353,7 @@ input[type=text]:focus { border-color: var(--accent); background: var(--bg); }
   <a href="index.html" class="active">ホーム</a>
   <a href="diagram_fixed.html">ダイヤエディタ</a>
   <a href="manual.html">マニュアル・Q&A</a>
-  <a href="terms.html" class="active">利用規約・免責事項</a>
+  <a href="terms.html">利用規約・免責事項</a>
   <div style="padding: 16px 6%; display:flex; gap:10px; border-top: 1px solid var(--border2); margin-top: 10px;">
     <span style="font-size:14px; font-weight:bold; color:var(--text2);">テーマ切替:</span>
     <div class="theme-dot" data-t="dark" onclick="setTheme('dark')" style="border-color:var(--text);"></div>
@@ -487,18 +486,17 @@ function createProject(){
   
   const list = getProjects(); list.push(project); saveProjects(list);
   sessionStorage.setItem('diastar_current', id);
-  window.open('diagram.html','_blank');
+  window.open('diagram_fixed.html','_blank');
   closeNewModal(); renderProjects();
 }
 
-function openProject(id){ sessionStorage.setItem('diastar_current',id); window.open('diagram.html','_blank'); }
+function openProject(id){ sessionStorage.setItem('diastar_current',id); window.open('diagram_fixed.html','_blank'); }
 
 function deleteProject(id){
   if(!confirm('ブラウザからこの路線データを削除しますか？\n（※事前にファイル保存していない場合は復元できません）')) return;
   saveProjects(getProjects().filter(p=>p.id!==id)); renderProjects();
 }
 
-// データ補完機能
 function migrateProjectData(p) {
   if (!p.id) p.id = Date.now().toString(36);
   if (!p.stations) p.stations = [];
@@ -523,7 +521,7 @@ function loadFile(e){
       if(idx>=0) list[idx]=p; else list.push(p);
       saveProjects(list); renderProjects();
       sessionStorage.setItem('diastar_current',p.id);
-      window.open('diagram.html','_blank');
+      window.open('diagram_fixed.html','_blank');
     } catch { alert('ファイルの読み込みに失敗しました。形式が正しいか確認してください。'); }
   };
   reader.readAsText(file);
@@ -531,11 +529,24 @@ function loadFile(e){
 }
 
 // オープニングアニメーションの制御
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    const splash = document.getElementById('splashScreen');
-    if (splash) splash.classList.add('hide');
-  }, 1800); // 1.8秒間オープニングを提示したあと、パッと上に上がります
+window.addEventListener('pageshow', (event) => {
+  const splash = document.getElementById('splashScreen');
+  if (!splash) return;
+
+  if (event.persisted) {
+    // ブラウザの「戻る」などでキャッシュから表示された場合は、最初からスプラッシュを消して表紙を表示する
+    splash.classList.add('hide');
+    document.body.classList.add('loaded');
+  } else {
+    // 初回アクセス時や通常のリンク移動の時は、アニメーションさせる
+    splash.classList.remove('hide');
+    document.body.classList.remove('loaded');
+    setTimeout(() => {
+      splash.classList.add('hide');
+      // スプラッシュが上に上がり始めるタイミングで表紙画像をじわっと表示開始
+      document.body.classList.add('loaded');
+    }, 1800);
+  }
 });
 
 renderProjects();
