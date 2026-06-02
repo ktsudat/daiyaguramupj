@@ -7,7 +7,6 @@
 <link rel="icon" href="image/001.png" type="image/png">
 <meta name="description" content="ブラウザで動く鉄道ダイヤ作成・編集ツール。入力データからダイヤグラム（スジ）を自動で描き出し、画像やPDFとして保存できます。">
 
-
 <style>
 /* ===== THEMES (Dark / Light Only) ===== */
 :root {
@@ -37,6 +36,63 @@ body {
   font-family: 'Noto Sans JP', "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif; 
   min-height: 100vh; overflow-x: hidden; line-height: 1.6; font-size: 16px;
   transition: background 0.2s, color 0.2s;
+}
+
+/* ===== SPLASH SCREEN (オープニング演出) ===== */
+#splashScreen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.6s cubic-bezier(0.85, 0, 0.15, 1), opacity 0.6s ease;
+}
+/* パッと上に上がるアニメーション用のクラス */
+#splashScreen.hide {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+.splash-text {
+  font-size: clamp(18px, 5vw, 36px);
+  font-weight: 800;
+  color: var(--accent);
+  opacity: 0;
+  transform: translateY(30px);
+  animation: splashFadeInUp 1.0s cubic-bezier(0.25, 1, 0.5, 1) forwards 0.2s;
+  text-align: center;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  white-space: nowrap; /* 改行させない */
+  padding: 0 20px;
+}
+@keyframes splashFadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== FULL COVER AREA (画面全体の表紙画像エリア) ===== */
+.full-cover-area {
+  margin-top: 70px; /* ヘッダーの高さ分 */
+  width: 100%;
+  height: calc(100vh - 70px); /* 画面一杯の高さ */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--bg2);
+  overflow: hidden;
+  border-bottom: 2px solid var(--border);
+}
+
+.full-cover-area img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;       /* ★ contain から cover に変更して余白を撲滅！ */
+  object-position: center; /* ★ 画像の中央を基準に配置（見切れる場合も中央を残す） */
 }
 
 /* ===== HEADER ===== */
@@ -99,8 +155,8 @@ header {
 .mobile-nav a.active, .mobile-nav a:hover { color: var(--accent); border-left-color: var(--accent); background: var(--bg3); }
 
 
-/* ===== MAIN ===== */
-main { max-width: 1000px; margin: 120px auto 60px; padding: 0 4%; }
+/* ===== MAIN (表紙画像の下に続くコンテンツ群) ===== */
+main { max-width: 1000px; margin: 60px auto 60px; padding: 0 4%; }
 
 .hero { margin-bottom: 70px; }
 .hero-label {
@@ -238,11 +294,21 @@ input[type=text]:focus { border-color: var(--accent); background: var(--bg); }
 @media (max-width: 768px) {
   .header-links { display: none; }
   .hamburger { display: flex; }
-  main { margin-top: 100px; }
+  main { margin-top: 40px; } /* 表紙画像との適切な隙間に調整 */
   .cta-group { flex-direction: column; }
   .btn-primary, .btn-secondary { width: 100%; }
 
-  /* スマホ用フッター調整を追加 */
+  /* ▼▼ ここから下を追加 ▼▼ */
+  .full-cover-area {
+    height: auto; /* スマホでは全画面(100vh)をやめて、画像本来の高さに合わせる */
+  }
+  .full-cover-area img {
+    height: auto;
+    object-fit: contain;
+    display: block;
+  }
+
+  /* スマホ用フッター調整 */
   .site-footer { padding: 40px 6% 16px; margin-top: 50px; }
   .footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
   .footer-col h4 { font-size: 14px; margin-bottom: 12px; }
@@ -255,11 +321,14 @@ input[type=text]:focus { border-color: var(--accent); background: var(--bg); }
 }
 </style>
 
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
 </head>
 <body data-theme="light">
+
+<div id="splashScreen">
+  <div class="splash-text">ダイヤ作成をもっと手軽に！</div>
+</div>
 
 <header>
   <a href="index.html" class="logo">
@@ -293,6 +362,10 @@ input[type=text]:focus { border-color: var(--accent); background: var(--bg); }
   </div>
 </nav>
 
+<div class="full-cover-area">
+  <img src="image/002.png" alt="表紙イメージ">
+</div>
+
 <main>
   <div class="hero">
     <div class="hero-label">ブラウザで動くダイヤグラム作成ツール</div>
@@ -315,7 +388,7 @@ input[type=text]:focus { border-color: var(--accent); background: var(--bg); }
   </div>
 </main>
 
-<<footer class="site-footer">
+<footer class="site-footer">
   <div class="footer-container">
     <div class="footer-grid">
       <div class="footer-col">
@@ -456,6 +529,14 @@ function loadFile(e){
   reader.readAsText(file);
   e.target.value = ''; 
 }
+
+// オープニングアニメーションの制御
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const splash = document.getElementById('splashScreen');
+    if (splash) splash.classList.add('hide');
+  }, 1800); // 1.8秒間オープニングを提示したあと、パッと上に上がります
+});
 
 renderProjects();
 </script>
