@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ダイヤ編集エディタ | AIダイヤグラム作成ツール｜スジ屋</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+/* ===== THEMES (index.htmlと統一) ===== */
+:root {
+  --accent: #0056b3; 
+  --accent-dim: rgba(0, 86, 179, 0.1);
+}
+[data-theme="dark"] {
+  --bg: #121212; --bg2: #1e1e1e; --bg3: #2d2d2d; --bg4: #3d3d3d;
+  --accent: #4f8ef5; --accent-dim: rgba(79,142,245,0.15);
+  --text: #ffffff; --text2: #aaaaaa; --text3: #777777;
+  --border: #333333; --border2: #444444;
+  --red: #e57373;
+  --tt-header: #1a1a1a; --tt-row-alt: #181818;
+}
+[data-theme="light"] {
+  --bg: #f8fafc; --bg2: #ffffff; --bg3: #f1f5f9; --bg4: #e2e8f0;
+  --accent: #0056b3; --accent-dim: rgba(0,86,179,0.08);
+  --text: #222222; --text2: #555555; --text3: #888888;
+  --border: #dddddd; --border2: #cccccc;
+  --red: #cc0000;
+  --tt-header: #f8f9fa; --tt-row-alt: #fdfdfd;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; border-radius:0 !important; }
+button, input, select, textarea { appearance:none; -webkit-appearance:none; }
+
+body { 
+  background: var(--bg); color: var(--text); 
+  font-family: 'Noto Sans JP', "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif; 
+  height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+  font-size: 14px;
+}
+
+/* ===== HEADER (index.htmlと統一) ===== */
+header {
+  background-color: var(--bg2); height: 60px; padding: 0 20px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 2px solid var(--accent); flex-shrink: 0; z-index: 1000;
+}
+.logo { text-decoration: none; color: var(--accent); font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.logo-mark { width: 28px; height: 28px; border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; }
+.logo-mark svg { width: 14px; height: 14px; stroke: var(--accent); fill: none; stroke-width: 2; }
+.logo span { font-size: 11px; color: var(--text2); margin-left: 6px; font-weight: 600; }
+
+.header-links { display: flex; gap: 20px; align-items: center; }
+.header-links a { text-decoration: none; color: var(--text); font-size: 14px; font-weight: 700; transition: 0.2s; padding-bottom: 3px; border-bottom: 3px solid transparent; }
+.header-links a:hover, .header-links a.active { color: var(--accent); border-color: var(--accent); }
+
+.theme-group { display: flex; gap: 8px; margin-left: 10px; padding-left: 16px; border-left: 1px solid var(--border2); }
+.theme-dot { width: 20px; height: 20px; border: 2px solid var(--border2); cursor: pointer; transition: 0.2s; }
+.theme-dot:hover, .theme-dot.active { border-color: var(--accent); }
+.theme-dot[data-t="dark"] { background: #121212; }
+.theme-dot[data-t="light"] { background: #ffffff; }
+
+/* ===== EDITOR TOOLBAR ===== */
+#toolbar {
+  display: flex; align-items: center; gap: 12px; padding: 0 20px; height: 54px;
+  background: var(--bg); border-bottom: 1px solid var(--border2);
+  flex-shrink: 0; flex-wrap: nowrap; overflow-x: auto;
+}
+#toolbar::-webkit-scrollbar { height: 0; }
+.menu-toggle { display: none; background: transparent; border: none; color: var(--text); font-size: 24px; cursor: pointer; }
+
+.tb-sep { width: 1px; height: 24px; background: var(--border2); margin: 0 8px; flex-shrink: 0; }
+.tb-title { font-size: 15px; font-weight: 700; color: var(--text); max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; padding: 4px 8px; transition: background 0.2s; border-bottom: 1px dashed var(--text3); }
+.tb-title:hover { background: var(--bg3); }
+
+.tb-btn { padding: 8px 14px; font-size: 13px; font-weight: 600; border: 1px solid var(--border2); background: var(--bg2); color: var(--text); cursor: pointer; white-space: nowrap; transition: 0.1s; display: inline-flex; align-items: center; gap: 4px; border-radius: 4px !important; }
+.tb-btn:hover { border-color: var(--text2); background: var(--bg3); }
+.tb-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.tb-btn.primary:hover { background: transparent; color: var(--accent); }
+.tb-btn.success { background: #16a34a; color: #fff; border-color: #16a34a; }
+.tb-btn.success:hover { background: transparent; color: #16a34a; }
+
+/* LAYOUT */
+#workspace { display: flex; flex: 1; overflow: hidden; position: relative; }
+
+/* SIDEBAR */
+#sidebar { width: 260px; flex-shrink: 0; background: var(--bg2); border-right: 1px solid var(--border2); display: flex; flex-direction: column; overflow: hidden; z-index: 100; }
+.side-header { padding: 12px 16px; font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border2); background: var(--bg3); display: flex; justify-content: space-between; align-items: center; }
+.close-sidebar { display: none; background: transparent; border: none; color: var(--text); font-size: 20px; cursor: pointer; }
+.side-body { flex: 1; overflow-y: auto; padding: 12px; }
+.side-sec { font-size: 12px; font-weight: 700; color: var(--text3); margin-bottom: 8px; }
+
+.station-item { display: flex; align-items: center; gap: 6px; padding: 6px; margin-bottom: 4px; background: var(--bg); border: 1px solid var(--border2); border-radius: 4px !important; }
+.station-drag { font-size: 16px; color: var(--text3); cursor: grab; user-select: none; padding: 0 4px; }
+.station-input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 14px; font-weight: 600; outline: none; min-width: 0; }
+.icon-btn { background: transparent; border: 1px solid transparent; color: var(--text); cursor: pointer; font-size: 12px; padding: 2px 4px; transition: 0.1s; border-radius: 4px !important; }
+.icon-btn:hover { background: var(--bg3); border-color: var(--border2); }
+.icon-btn.danger { color: var(--red); }
+
+/* 単線・複線切り替えトグルボタン */
+.track-toggle {
+  display: flex; justify-content: center; align-items: center;
+  font-size: 11px; font-weight: bold; cursor: pointer; padding: 2px 0; margin: 2px 30px;
+  border-radius: 4px; border: 1px dashed var(--border2); color: var(--text3);
+  transition: 0.2s; user-select: none;
+}
+.track-toggle:hover { background: var(--bg3); }
+.track-toggle.double-track { color: var(--accent); border: 1px solid var(--accent); background: var(--accent-dim); }
+.track-toggle.single-track { color: var(--red); border: 1px solid var(--red); background: rgba(229,115,115,0.1); }
+
+.add-row { display: flex; gap: 4px; margin-bottom: 16px; }
+.add-input { flex: 1; padding: 6px 8px; background: var(--bg); border: 1px solid var(--border2); color: var(--text); font-size: 13px; outline: none; border-radius: 4px !important; }
+.add-btn { padding: 6px 12px; background: var(--accent); color: #fff; border: none; cursor: pointer; font-size: 13px; font-weight: 600; border-radius: 4px !important; }
+
+/* MAIN AREA */
+#main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+
+/* TAB DESIGN */
+.view-tabs { display: flex; gap: 20px; padding: 16px 20px 0; background: var(--bg2); border-bottom: 1px solid var(--border2); }
+.view-tab { 
+  background: transparent; border: none; color: var(--text); font-size: 14px; font-weight: 700; 
+  cursor: pointer; padding-bottom: 8px; border-bottom: 3px solid transparent; transition: 0.2s; 
+}
+.view-tab:hover { color: var(--accent); }
+.view-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+#view-container { flex: 1; overflow: auto; position: relative; }
+
+/* TIMETABLE VIEW */
+.timetable-wrapper { padding: 16px; display: none; width: max-content; min-width: 100%; }
+.timetable-wrapper.active { display: block; }
+
+.tt-options { margin-bottom: 12px; padding: 6px 12px; background: var(--bg2); border: 1px solid var(--border2); display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; border-radius: 4px !important; }
+.paper-table { border-collapse: collapse; background: var(--bg2); font-size: 13px; }
+.paper-table th, .paper-table td { border: 1px solid var(--border); padding: 0; text-align: center; vertical-align: middle; }
+.paper-table thead th { background: var(--tt-header); font-size: 12px; font-weight: 600; color: var(--text); }
+.paper-table .st-col { position: sticky; left: 0; background: var(--tt-header); width: 120px; text-align: left; padding: 0 10px; z-index: 10; }
+.paper-table .st-type { width: 30px; font-size: 11px; color: var(--text2); background: var(--tt-header); position: sticky; left: 120px; z-index: 10; }
+.paper-table thead .st-col, .paper-table thead .st-type { z-index: 11; }
+
+.train-col { width: 75px; min-width: 75px; max-width: 75px; }
+.paper-table tbody tr:nth-child(4n+1), .paper-table tbody tr:nth-child(4n+2) { background: var(--tt-row-alt); }
+
+/* 種別・列車名共通のスタイル設定（頭は上、左右は中央揃え） */
+.th-input { 
+  border: none; background: transparent; color: inherit; 
+  font-family: inherit; font-size: 12px; font-weight: 600; outline: none; 
+  writing-mode: vertical-rl; text-orientation: upright;
+  text-align: start; /* 頭（書き始め）を上にする */
+  padding: 6px 0;
+  display: block;    /* ブロック要素にする */
+  margin: 0 auto;    /* セルの左右中央に寄せる */
+  width: 24px;       /* 横幅を固定して左右ブレを防ぐ */
+  box-sizing: border-box;
+}
+.th-input:focus { background: var(--bg); }
+
+/* 種別の高さ設定 */
+.th-type-input { 
+  height: 80px; 
+  resize: none; overflow: hidden; white-space: pre-wrap; word-break: break-all;
+}
+
+/* 列車名の高さ・折り返し設定 */
+.th-name-input { 
+  height: 120px; letter-spacing: 2px;
+  resize: none; overflow: hidden; white-space: pre-wrap; word-break: break-all;
+}
+
+.color-dot { width: 16px; height: 16px; margin: 4px auto; cursor: pointer; border: 1px solid var(--border2); border-radius: 50% !important; }
+
+/* COMPACT TRAIN ACTIONS */
+.train-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 4px; background: var(--bg2); border-bottom: 1px solid var(--border); }
+.act-btn { font-size: 14px; padding: 2px; background: var(--bg); border: 1px solid var(--border2); color: var(--text); cursor: pointer; border-radius: 4px !important; transition: 0.1s; display: flex; align-items: center; justify-content: center; width: 100%; height: 22px; }
+.act-btn:hover { background: var(--bg4); border-color: var(--text3); }
+.act-btn.danger { color: var(--red); }
+.act-btn.danger:hover { background: rgba(229, 115, 115, 0.2); }
+
+.time-input {
+  width: 100%; height: 100%; border: none; background: transparent; color: var(--text);
+  font-family: 'Courier New', monospace; font-size: 13px; font-weight: 700; text-align: center; padding: 6px 0; outline: none;
+}
+.time-input::placeholder { color: var(--text3); opacity: 0.6; } /* 未入力時の「・・」 */
+td[rowspan="2"] .time-input { height: 100%; min-height: 40px; }
+.time-input:focus { background: #e3f2fd; color: #000; z-index: 5; position: relative; outline: 2px solid var(--accent); }
+.time-input.pass { color: var(--text3); font-family: inherit; font-size: 14px; }
+.add-train-btn { width: 100%; padding: 6px 0; background: transparent; border: none; color: var(--accent); cursor: pointer; font-weight: 700; font-size: 14px; }
+
+/* DIAGRAM VIEW */
+#view-diagram { display: none; width: 100%; height: 100%; background: var(--bg); }
+#view-diagram.active { display: block; }
+#diagramCanvas { display: block; }
+
+/* 衝突警告パネル用CSS */
+#collisionAlert {
+  display: none; position: fixed; bottom: 20px; right: 20px; 
+  background: rgba(220, 38, 38, 0.95); color: #fff; padding: 16px; border-radius: 8px !important; 
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3); z-index: 10000; 
+  max-height: 350px; overflow-y: auto; min-width: 250px;
+}
+
+/* STATUS BAR / FOOTER */
+#statusbar { padding: 6px 20px; background: var(--bg2); border-top: 1px solid var(--border2); font-size: 12px; font-weight:600; color: var(--text2); display: flex; gap: 20px; align-items: center; justify-content: space-between; }
+.status-links a { color: var(--accent); text-decoration: none; margin-left: 15px; }
+.status-links a:hover { text-decoration: underline; }
+
+/* MENUS & MODALS */
+#quick-input-menu {
+  display: none; position: absolute; z-index: 9999;
+  background: var(--bg2); border: 1px solid var(--accent);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2); flex-direction: row; gap: 2px; padding: 4px; border-radius: 4px !important;
+}
+.quick-btn {
+  background: var(--bg); border: 1px solid var(--border2); color: var(--text);
+  padding: 4px 8px; font-size: 13px; cursor: pointer; font-weight: 600; border-radius: 4px !important;
+}
+.quick-btn:hover { background: var(--accent); color: #fff; }
+
+#colorPicker { display: none; position: absolute; z-index: 3000; background: var(--bg2); border: 1px solid var(--border2); padding: 8px; grid-template-columns: repeat(4, 1fr); gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 4px !important; }
+.picker-swatch { width: 20px; height: 20px; border-radius: 50% !important; cursor: pointer; border: 1px solid transparent; transition: 0.1s; }
+.picker-swatch:hover { transform: scale(1.1); border-color: var(--text); }
+
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; }
+.modal-content { background: var(--bg2); padding: 20px; width: 320px; border-radius: 8px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border2); }
+.modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; border-bottom: 1px solid var(--border2); padding-bottom: 8px; color: var(--accent); }
+.setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; }
+.key-btn { padding: 4px 12px; font-size: 12px; font-family: monospace; background: var(--bg); border: 1px solid var(--border2); cursor: pointer; border-radius: 4px !important; width: 100px; text-align: center; font-weight: bold; color: var(--text); }
+.key-btn:focus { outline: 2px solid var(--accent); background: #e3f2fd; color: #000; }
+.modal-actions { margin-top: 20px; text-align: right; }
+
+.mobile-overlay-menu { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.5); z-index: 90; }
+@media (max-width: 950px) {
+  .menu-toggle { display: block; } .header-links { display: none; } header .logo span { display: none; }
+  #sidebar { position: absolute; top: 0; bottom: 0; left: 0; transform: translateX(-100%); transition: transform 0.2s ease-out; box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
+  #sidebar.open { transform: translateX(0); } .close-sidebar { display: block; } .mobile-overlay-menu.show { display: block; }
+}
+
+/* ===== AI MODE TOGGLE ===== */
+.ai-mode-toggle {
+  display: inline-flex; align-items: center; gap: 0;
+  border: 1.5px solid var(--border2); background: var(--bg2);
+  overflow: hidden; flex-shrink: 0; border-radius: 6px !important;
+  position: relative;
+}
+.ai-mode-toggle-btn {
+  padding: 6px 14px; font-size: 12px; font-weight: 700; border: none; cursor: pointer;
+  background: transparent; color: var(--text3); transition: all 0.2s ease;
+  white-space: nowrap; display: flex; align-items: center; gap: 5px; letter-spacing: 0.02em;
+  border-radius: 0 !important;
+}
+.ai-mode-toggle-btn.active-manual {
+  background: var(--bg3); color: var(--text); pointer-events: none;
+}
+.ai-mode-toggle-btn.active-ai {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #fff; pointer-events: none;
+}
+.ai-mode-toggle-btn:not([class*="active"]):hover { background: var(--bg3); color: var(--text2); }
+.ai-divider { width: 1px; background: var(--border2); align-self: stretch; flex-shrink: 0; }
+
+/* AIモード中のツールバー強調 */
+#toolbar.ai-mode-active { border-bottom-color: #8b5cf6; }
+
+/* AIモード：準備中モーダル */
+#aiModeModal .modal-content { width: 360px; }
+.ai-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff; padding: 4px 12px; font-size: 12px; font-weight: 700;
+  margin-bottom: 12px; border-radius: 4px !important; letter-spacing: 0.05em;
+}
+.ai-coming-soon {
+  background: var(--bg3); border: 1px solid var(--border2);
+  padding: 14px; margin: 12px 0; font-size: 13px; line-height: 1.7; color: var(--text2);
+}
+.ai-coming-soon strong { color: var(--text); display: block; margin-bottom: 4px; }
+.ai-feature-list { list-style: none; padding: 0; margin: 8px 0 0; }
+.ai-feature-list li { padding: 4px 0; font-size: 13px; color: var(--text2); }
+.ai-feature-list li::before { content: "✦ "; color: #8b5cf6; font-size: 10px; }
+
+/* 印刷・PDF出力用スタイル */
+@media print {
+  body { background: #fff !important; color: #000 !important; height: auto !important; overflow: visible !important; }
+  header, #toolbar, #sidebar, #statusbar, .view-tabs, .tt-options, .train-actions, .add-train-btn, .mobile-overlay-menu, #quick-input-menu, #colorPicker, .modal-overlay, #collisionAlert, .no-print { display: none !important; }
+  #workspace, #main-content, #view-container, .timetable-wrapper.active, #view-diagram.active { display: block !important; height: auto !important; overflow: visible !important; position: static !important; }
+  .paper-table { width: 100% !important; border-collapse: collapse !important; }
+  .paper-table th, .paper-table td { border: 1px solid #000 !important; }
+  .paper-table .st-col, .paper-table .st-type { position: static !important; background: #fff !important; }
+  input, textarea { border: none !important; background: transparent !important; color: #000 !important; outline: none !important; }
+  .time-input::placeholder { color: transparent !important; } /* 印刷時はプレースホルダーを消す */
+  #diagramCanvas { max-width: 100%; }
+}
+</style>
+</head>
+<body data-theme="light">
+
+<header>
+  <a href="index.html" class="logo">
+    <div class="logo-mark"><svg viewBox="0 0 16 16"><polyline points="2,12 5,8 8,10 11,5 14,7"/><line x1="2" y1="14" x2="14" y2="14"/></svg></div>
+    <div>スジ屋<span>エディタ</span></div>
+  </a>
+  <div class="header-links">
+    <a href="index.html">ホーム</a>
+    <a href="diagram_fixed.html" class="active">ダイヤエディタ</a>
+    <a href="manual.html">マニュアル・Q&A</a>
+    <div class="theme-group">
+      <div class="theme-dot" data-t="dark" title="ダークモード" onclick="setTheme('dark')"></div>
+      <div class="theme-dot" data-t="light" title="ライトモード" onclick="setTheme('light')"></div>
+    </div>
+  </div>
+</header>
+
+<div id="toolbar">
+  <button class="menu-toggle" onclick="toggleSidebar()">≡</button>
+  <span class="tb-title" id="tbTitle" onclick="renameProject()" title="クリックで路線名を変更">読み込み中...</span>
+  <div class="tb-sep"></div>
+  
+  <button class="tb-btn" onclick="undo()">元に戻す</button>
+  <button class="tb-btn" onclick="renderAll()">画面更新</button>
+
+  <div style="flex:1;"></div>
+  
+  <button class="tb-btn" onclick="openSettingsModal()"> 設定</button>
+  <div class="tb-sep"></div>
+
+  <!-- AIモード切り替えトグル -->
+  <div class="ai-mode-toggle" id="aiModeToggle" title="AIモード（準備中）">
+    <button class="ai-mode-toggle-btn active-manual" id="btnModeManual" onclick="setEditorMode('manual')">
+      ✎ 手動編集
+    </button>
+    <div class="ai-divider"></div>
+    <button class="ai-mode-toggle-btn" id="btnModeAI" onclick="setEditorMode('ai')">
+      ✦ AIモード
+    </button>
+  </div>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="document.getElementById('importFile').click()">開く</button>
+  <input type="file" id="importFile" accept=".json" style="display:none" onchange="loadFile(event)">
+  <button class="tb-btn success" onclick="exportDataJSON()">保存(DL)</button>
+  
+  <div class="tb-sep"></div>
+  
+  <label class="tb-btn" style="border-color:var(--red); color:var(--red); background:rgba(229,115,115,0.1); cursor:pointer;">
+    <input type="checkbox" id="collisionToggle" onchange="drawDiagram()" style="margin-right:4px;"> △ 衝突チェック
+  </label>
+
+  <div class="tb-sep"></div>
+  
+  <button class="tb-btn primary" onclick="exportPNG()">画像保存(PNG)</button>
+  <button class="tb-btn primary" onclick="exportPDF()">印刷 / PDF</button>
+  <button class="tb-btn primary" onclick="exportCSV()">CSV出力</button>
+</div>
+
+<div id="workspace">
+  <div class="mobile-overlay-menu" id="mobileOverlay" onclick="toggleSidebar()"></div>
+
+  <div id="sidebar">
+    <div class="side-header">
+      メニュー
+      <button class="close-sidebar" onclick="toggleSidebar()">✕</button>
+    </div>
+    <div class="side-body">
+      <div class="side-sec">駅リスト（≡をドラッグで移動）</div>
+      <div id="stationList"></div>
+      
+      <div class="add-row" style="margin-top:12px;">
+        <input class="add-input" id="newStationInput" placeholder="新しい駅名" onkeydown="if(event.key==='Enter')addStation()">
+        <button class="add-btn" onclick="addStation()">追加</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="main-content">
+    <div class="view-tabs">
+      <button class="view-tab active" id="tab-down" onclick="switchMainView('down')">時刻表 (下り)</button>
+      <button class="view-tab" id="tab-up" onclick="switchMainView('up')">時刻表 (上り)</button>
+      <button class="view-tab" id="tab-diagram" onclick="switchMainView('diagram')">ダイヤ表示</button>
+    </div>
+    
+    <div id="view-container">
+      <div id="view-down" class="timetable-wrapper active">
+        <div class="tt-options no-print">
+          <label><input type="checkbox" id="shiftDownCheck" checked> 時刻変更時、後続もずらす</label>
+        </div>
+        <table class="paper-table" id="tt-down"></table>
+      </div>
+      
+      <div id="view-up" class="timetable-wrapper">
+        <div class="tt-options no-print">
+          <label><input type="checkbox" id="shiftUpCheck" checked> 時刻変更時、後続もずらす</label>
+        </div>
+        <table class="paper-table" id="tt-up"></table>
+      </div>
+      
+      <div id="view-diagram" class="timetable-wrapper">
+        <div style="padding:8px 16px; background:var(--bg2); border-bottom:1px solid var(--border2); display:flex; align-items:center; gap:10px; position:sticky; top:0; z-index:100;" class="no-print">
+          <button class="tb-btn" onclick="zoomOut()">縮小 (-)</button>
+          <button class="tb-btn" onclick="resetZoom()">100%</button>
+          <button class="tb-btn" onclick="zoomIn()">拡大 (+)</button>
+          <div class="tb-sep"></div>
+          <span style="font-size:13px; font-weight:600; margin-left:10px;">表示:</span>
+          <select id="diagramLabelMode" class="tb-btn" style="background:var(--bg3);" onchange="drawDiagram()">
+            <option value="none">線のみ</option>
+            <option value="name">列車名のみ</option>
+            <option value="full" selected>種別＋列車名</option>
+          </select>
+        </div>
+        <canvas id="diagramCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="statusbar">
+  <div>
+    <span id="sb-stations">駅: 0</span> | 
+    <span id="sb-trains">列車: 0</span>
+  </div>
+  <div class="status-links">
+    <a href="index.html">ホーム</a>
+    <a href="manual.html">マニュアル・Q&A</a>
+  </div>
+</div>
+
+<div id="quick-input-menu">
+  <button class="quick-btn" onmousedown="insertQuickSymbol(event, 'レ')">レ</button>
+  <button class="quick-btn" onmousedown="insertQuickSymbol(event, '||')">||</button>
+  <button class="quick-btn" onmousedown="insertQuickSymbol(event, '＝')">＝</button>
+  <button class="quick-btn" onmousedown="insertQuickSymbol(event, '')" style="color:var(--text3);">クリア</button>
+</div>
+
+<div id="colorPicker"></div>
+
+<div id="settingsModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-title">ショートカットキー設定</div>
+    <p style="font-size:12px; color:var(--text3); margin-bottom:12px;">ボタンをクリックして、割り当てたいキーを押してください。</p>
+    
+    <div class="setting-row">
+      <span>レ (通過):</span>
+      <button class="key-btn" id="btn-sc-pass" onkeydown="captureKey(event, 'pass')"></button>
+    </div>
+    <div class="setting-row">
+      <span>|| (他線経由):</span>
+      <button class="key-btn" id="btn-sc-other" onkeydown="captureKey(event, 'other')"></button>
+    </div>
+    <div class="setting-row">
+      <span>＝ (途中止まり):</span>
+      <button class="key-btn" id="btn-sc-stop" onkeydown="captureKey(event, 'stop')"></button>
+    </div>
+    <div class="setting-row">
+      <span>空欄に戻す:</span>
+      <button class="key-btn" id="btn-sc-clear" onkeydown="captureKey(event, 'clear')"></button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="tb-btn primary" onclick="closeSettingsModal()">完了</button>
+    </div>
+  </div>
+</div>
+
+<div id="collisionAlert"></div>
+
+<!-- AIモード準備中モーダル -->
+<div id="aiModeModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="ai-badge">✦ AI MODE</div>
+    <div class="modal-title" style="color: #8b5cf6;">AIダイヤ作成モード</div>
+    <div class="ai-coming-soon">
+      <strong>△ このモードは現在準備中です</strong>
+      沿線人口・旅客流動データや運行条件を入力するだけで、AIが最適なダイヤ案を自動生成する機能を開発中です。
+    </div>
+    <ul class="ai-feature-list">
+      <li>沿線人口・OD流動データの読み込み</li>
+      <li>時間帯別需要に基づく本数・間隔の最適化</li>
+      <li>接続・折り返しなどの制約条件を指定</li>
+      <li>ユーザー要望を自然言語で追加入力</li>
+    </ul>
+    <div class="modal-actions" style="display:flex; gap:8px; justify-content:flex-end; margin-top:20px;">
+      <button class="tb-btn" onclick="closeAiModeModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'diastar_projects';
+const SHORTCUT_KEY = 'diastar_shortcuts';
+const THEME_KEY = 'diastar_theme';
+let project = null;
+let currentView = 'down';
+let zoom = 1.0;
+const COLORS = ['#4f8ef5','#e05a5a','#4caf7d','#d4943a','#a06dd4','#1a1a1a','#888888', '#0056b3', '#cc0000', '#ff9800'];
+const PASS_MARKS = ['レ','||','＝'];
+
+// ===== AI MODE =====
+let currentEditorMode = 'manual'; // 'manual' | 'ai'
+
+function setEditorMode(mode) {
+  if (mode === 'ai') {
+    // 準備中モーダルを表示し、モードはmanualのまま維持
+    document.getElementById('aiModeModal').style.display = 'flex';
+    return;
+  }
+  currentEditorMode = mode;
+  const toolbar = document.getElementById('toolbar');
+  const btnManual = document.getElementById('btnModeManual');
+  const btnAI = document.getElementById('btnModeAI');
+
+  if (mode === 'manual') {
+    btnManual.className = 'ai-mode-toggle-btn active-manual';
+    btnAI.className = 'ai-mode-toggle-btn';
+    toolbar.classList.remove('ai-mode-active');
+  }
+}
+function closeAiModeModal() {
+  document.getElementById('aiModeModal').style.display = 'none';
+}
+// モーダル外クリックで閉じる
+document.addEventListener('click', function(e) {
+  const modal = document.getElementById('aiModeModal');
+  if (modal && modal.style.display === 'flex' && e.target === modal) closeAiModeModal();
+});
+
+function setTheme(t) { document.body.setAttribute('data-theme', t); localStorage.setItem(THEME_KEY, t); }
+(function(){ const saved = localStorage.getItem(THEME_KEY) || 'light'; setTheme(saved); })();
+
+let shortcuts = { pass: 'r', other: 'l', stop: '-', clear: 'backspace' };
+function loadShortcuts() { const saved = localStorage.getItem(SHORTCUT_KEY); if(saved) shortcuts = { ...shortcuts, ...JSON.parse(saved) }; }
+function saveShortcuts() { localStorage.setItem(SHORTCUT_KEY, JSON.stringify(shortcuts)); }
+function formatKey(k) { return k.toLowerCase(); }
+
+function openSettingsModal() {
+  document.getElementById('btn-sc-pass').textContent = shortcuts.pass.toUpperCase();
+  document.getElementById('btn-sc-other').textContent = shortcuts.other.toUpperCase();
+  document.getElementById('btn-sc-stop').textContent = shortcuts.stop.toUpperCase();
+  document.getElementById('btn-sc-clear').textContent = shortcuts.clear.toUpperCase();
+  document.getElementById('settingsModal').style.display = 'flex';
+}
+function closeSettingsModal() { document.getElementById('settingsModal').style.display = 'none'; }
+function captureKey(e, action) {
+  e.preventDefault(); e.stopPropagation();
+  const ignoreKeys = ['Tab', 'Shift', 'Control', 'Alt', 'Meta', 'Escape', 'Enter'];
+  if(ignoreKeys.includes(e.key)) return;
+  let keyName = e.key === ' ' ? 'Space' : e.key;
+  shortcuts[action] = keyName; e.target.textContent = keyName.toUpperCase(); saveShortcuts();
+}
+
+let historyStack = [];
+let historyIndex = -1;
+let isUndoAction = false;
+function pushHistory() {
+  if (isUndoAction) { isUndoAction = false; return; }
+  const state = JSON.stringify(project);
+  if (historyIndex < historyStack.length - 1) historyStack = historyStack.slice(0, historyIndex + 1);
+  if (historyStack.length > 0 && historyStack[historyIndex] === state) return;
+  historyStack.push(state);
+  if (historyStack.length > 30) historyStack.shift(); else historyIndex++;
+}
+function undo() {
+  if (historyIndex > 0) {
+    historyIndex--; project = JSON.parse(historyStack[historyIndex]);
+    isUndoAction = true; saveProject(true); renderAll();
+  }
+}
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+window.addEventListener('load', ()=>{ loadShortcuts(); loadCurrentProject(); initColorPicker(); });
+window.addEventListener('resize', ()=>{ if(currentView === 'diagram') drawDiagram(); });
+
+document.addEventListener('keydown', function(e) {
+  if (e.target.classList.contains('time-input')) {
+    const input = e.target; const keyLower = formatKey(e.key);
+    
+    if (keyLower === formatKey(shortcuts.pass)) { e.preventDefault(); insertSymbolToActive(input, 'レ'); return; }
+    if (keyLower === formatKey(shortcuts.other)) { e.preventDefault(); insertSymbolToActive(input, '||'); return; }
+    if (keyLower === formatKey(shortcuts.stop)) { e.preventDefault(); insertSymbolToActive(input, '＝'); return; }
+    if (keyLower === formatKey(shortcuts.clear)) { if(PASS_MARKS.includes(input.value)) { e.preventDefault(); insertSymbolToActive(input, ''); return; } }
+
+    const currentTid = input.dataset.tid, currentRid = parseInt(input.dataset.rid);
+    const allInputs = Array.from(document.querySelectorAll(`#view-${currentView} .time-input`));
+    if(allInputs.length === 0) return;
+    
+    const trainIds = [...new Set(allInputs.map(inp => inp.dataset.tid))];
+    const tIdx = trainIds.indexOf(currentTid); let targetInput = null;
+
+    if (e.key === 'ArrowUp') {
+      targetInput = document.querySelector(`#view-${currentView} .time-input[data-tid="${currentTid}"][data-rid="${currentRid - 1}"]`);
+      if(!targetInput) targetInput = document.querySelector(`#view-${currentView} .time-input[data-tid="${currentTid}"][data-rid="${currentRid - 2}"]`);
+    } else if (e.key === 'ArrowDown') {
+      targetInput = document.querySelector(`#view-${currentView} .time-input[data-tid="${currentTid}"][data-rid="${currentRid + 1}"]`);
+      if(!targetInput) targetInput = document.querySelector(`#view-${currentView} .time-input[data-tid="${currentTid}"][data-rid="${currentRid + 2}"]`);
+    } else if (e.key === 'ArrowLeft' && input.selectionStart === 0) {
+      const prevTid = trainIds[tIdx - 1]; if(prevTid) targetInput = document.querySelector(`#view-${currentView} .time-input[data-tid="${prevTid}"][data-rid="${currentRid}"]`);
+    } else if (e.key === 'ArrowRight' && input.selectionEnd === input.value.length) {
+      const nextTid = trainIds[tIdx + 1]; if(nextTid) targetInput = document.querySelector(`#view-${currentView} .time-input[data-tid="${nextTid}"][data-rid="${currentRid}"]`);
+    }
+    if (targetInput) { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault(); targetInput.focus(); setTimeout(() => targetInput.select(), 10); }
+  }
+});
+
+let activeTimeInput = null;
+document.addEventListener('click', (e) => {
+  const qMenu = document.getElementById('quick-input-menu');
+  
+  if(e.target.classList.contains('time-input')) {
+    activeTimeInput = e.target; const rect = activeTimeInput.getBoundingClientRect();
+    qMenu.style.top = (rect.bottom + window.scrollY + 2) + 'px';
+    qMenu.style.left = (rect.left + window.scrollX - 10) + 'px';
+    qMenu.style.display = 'flex'; activeTimeInput.select();
+  } else if (!e.target.closest('#quick-input-menu')) { qMenu.style.display = 'none'; }
+  
+  if(!e.target.closest('#colorPicker') && !e.target.closest('.color-dot')) { document.getElementById('colorPicker').style.display = 'none'; }
+});
+
+function insertQuickSymbol(e, sym) { e.preventDefault(); if(activeTimeInput) insertSymbolToActive(activeTimeInput, sym); document.getElementById('quick-input-menu').style.display = 'none'; }
+function insertSymbolToActive(inputEl, sym) { inputEl.value = sym; inputEl.dispatchEvent(new Event('change')); }
+
+function exportPNG() {
+  if (currentView === 'diagram') {
+    drawDiagram();
+    const canvasEl = document.getElementById('diagramCanvas');
+    const a = document.createElement('a'); a.download = (project.name || 'diagram') + '.png';
+    a.href = canvasEl.toDataURL('image/png'); a.click();
+  } else {
+    const table = document.getElementById('tt-' + currentView);
+    if (!table) return;
+    const bgColor = getComputedStyle(document.body).getPropertyValue('--bg2').trim();
+    html2canvas(table, { backgroundColor: bgColor, scale: 2, useCORS: true }).then(cvs => {
+      const a = document.createElement('a'); const dirName = currentView === 'down' ? '下り' : '上り';
+      a.download = `${project.name || 'timetable'}_${dirName}.png`; a.href = cvs.toDataURL('image/png'); a.click();
+    });
+  }
+}
+
+function exportPDF() { window.print(); }
+
+function exportCSV() {
+  if (currentView === 'diagram') { alert('CSV出力は「時刻表」タブを開いている時に実行してください。'); return; }
+  const dirName = currentView === 'down' ? '下り' : '上り';
+  const trains = project.trains.filter(t => t.dir === currentView);
+  const displayStations = currentView === 'down' ? project.stations : [...project.stations].reverse();
+  
+  let csv = '駅名,着/発,' + trains.map(t => `"${t.id || ''}"`).join(',') + '\n';
+  csv += '種別,,' + trains.map(t => `"${t.type || ''}"`).join(',') + '\n';
+  csv += '列車名,,' + trains.map(t => `"${t.name || ''}"`).join(',') + '\n';
+  
+  displayStations.forEach((s, i) => {
+    const origIdx = currentView === 'down' ? i : project.stations.length - 1 - i;
+    let arrRow = `"${s.name || ''}",着`, depRow = `"",発`;
+    trains.forEach(t => { 
+      const timeData = (t.times && t.times[origIdx]) ? t.times[origIdx] : { arr: '', dep: '' };
+      arrRow += `,"${timeData.arr || ''}"`; 
+      depRow += `,"${timeData.dep || ''}"`; 
+    });
+    csv += arrRow + '\n' + depRow + '\n';
+  });
+  
+  const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+  const blob = new Blob([bom, csv], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `${project.name || 'timetable'}_${dirName}.csv`; a.click();
+}
+
+function migrateProjectData(p) {
+  if (!p.id) p.id = Date.now().toString(36);
+  if (!p.stations) p.stations = [];
+  if (!p.trains) p.trains = [];
+  p.stations.forEach(s => {
+    if (!s.trackType) s.trackType = 'single';
+  });
+  p.trains.forEach(tr => {
+    if (!tr.times) tr.times = [];
+    while(tr.times.length < p.stations.length) tr.times.push({arr:'', dep:''});
+    if(tr.times.length > p.stations.length) tr.times.length = p.stations.length;
+  });
+  return p;
+}
+
+function loadCurrentProject(){
+  const id = sessionStorage.getItem('diastar_current');
+  const list = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+  let p = list.find(x=>x.id===id);
+  if(!p){
+    p={
+      id:'demo',name:'サンプル路線',
+      stations:[{name:'A駅(起点)', trackType:'single'},{name:'B駅', trackType:'single'},{name:'C駅', trackType:'single'},{name:'D駅(終点)', trackType:'single'}],
+      trains:[
+        {id:'t1',name:'あずさ1号',type:'特急',dir:'down',color:'#cc0000',times:[{arr:'',dep:'06:00'},{arr:'レ',dep:'レ'},{arr:'レ',dep:'レ'},{arr:'06:45',dep:''}]},
+        {id:'t2',name:'202M',type:'普通',dir:'up',color:'#0056b3',times:[{arr:'07:30',dep:''},{arr:'06:55',dep:'06:56'},{arr:'06:32',dep:'06:33'},{arr:'',dep:'06:10'}]},
+      ]
+    };
+  }
+  project = migrateProjectData(p); pushHistory(); updateTitleUI(); renderAll();
+}
+
+function updateTitleUI() { document.getElementById('tbTitle').textContent = project.name || '無題の路線'; }
+function renameProject() {
+  const newName = prompt('路線名を入力してください', project.name);
+  if (newName !== null && newName.trim() !== '') { project.name = newName.trim(); updateTitleUI(); saveProject(true); pushHistory(); }
+}
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('mobileOverlay').classList.toggle('show'); }
+
+function switchMainView(view){
+  currentView = view;
+  ['down','up','diagram'].forEach(v=>{
+    document.getElementById('tab-'+v).classList.toggle('active', v===view);
+    document.getElementById('view-'+v).classList.toggle('active', v===view);
+  });
+  if(view==='diagram') drawDiagram();
+}
+
+let targetTrainIdForColor = null;
+function initColorPicker() {
+  const picker = document.getElementById('colorPicker');
+  COLORS.forEach(c => {
+    const s = document.createElement('div'); s.className = 'picker-swatch'; s.style.background = c;
+    s.onclick = (e) => {
+      e.stopPropagation();
+      if(targetTrainIdForColor) {
+        const t = project.trains.find(x=>x.id===targetTrainIdForColor);
+        if(t) { t.color = c; saveProject(true); pushHistory(); updateStatusBar(); renderTimetables(); }
+      }
+      picker.style.display = 'none';
+    };
+    picker.appendChild(s);
+  });
+}
+
+function openColorPicker(e, trainId) {
+  e.stopPropagation(); targetTrainIdForColor = trainId; const picker = document.getElementById('colorPicker');
+  picker.style.display = 'grid'; const rect = e.target.getBoundingClientRect();
+  picker.style.top = (rect.bottom + window.scrollY + 5) + 'px'; picker.style.left = (rect.left + window.scrollX - 20) + 'px';
+}
+
+function renderStations(){
+  const el=document.getElementById('stationList'); el.innerHTML='';
+  (project.stations||[]).forEach((s,i)=>{
+    const row = document.createElement('div'); row.className = 'station-item'; row.draggable = true;
+    row.innerHTML=`<span class="station-drag">≡</span>
+      <input class="station-input" value="${esc(s.name)}" onchange="updateStation(${i},'name',this.value)">
+      <button class="icon-btn danger" onclick="removeStation(${i})">✕</button>`;
+    row.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', i));
+    row.addEventListener('dragover', e => e.preventDefault());
+    row.addEventListener('drop', e => {
+      const from = parseInt(e.dataTransfer.getData('text/plain')), to = i;
+      if (from !== to && !isNaN(from)) {
+        const item = project.stations.splice(from, 1)[0]; project.stations.splice(to, 0, item);
+        project.trains.forEach(tr => { if(tr.times.length > Math.max(from, to)) { const t = tr.times.splice(from, 1)[0]; tr.times.splice(to, 0, t); } });
+        renderAll(); saveProject(true); pushHistory();
+      }
+    });
+    el.appendChild(row);
+    
+    if (i < project.stations.length - 1) {
+      const tt = document.createElement('div');
+      tt.className = 'track-toggle ' + (s.trackType === 'double' ? 'double-track' : 'single-track');
+      tt.innerHTML = s.trackType === 'double' ? '‖ 複線区間' : '｜ 単線区間';
+      tt.onclick = () => {
+        s.trackType = s.trackType === 'double' ? 'single' : 'double';
+        saveProject(true); pushHistory(); renderStations(); 
+        if(document.getElementById('collisionToggle') && document.getElementById('collisionToggle').checked) drawDiagram();
+      };
+      el.appendChild(tt);
+    }
+  });
+  updateStatusBar();
+}
+
+function addStation(){
+  const inp = document.getElementById('newStationInput'); const name = inp.value.trim(); 
+  if(!name) return;
+  project.stations.push({name: name, trackType: 'single'});
+  project.trains.forEach(tr => tr.times.push({arr:'', dep:''}));
+  inp.value = ''; renderAll(); saveProject(true); pushHistory(); inp.focus();
+}
+
+function removeStation(i){
+  if(!confirm('駅を削除しますか？')) return;
+  project.stations.splice(i,1); 
+  project.trains.forEach(tr => { if(tr.times.length > i) tr.times.splice(i,1); });
+  renderAll(); saveProject(true); pushHistory();
+}
+function updateStation(i,key,val){ project.stations[i][key]=val; renderTimetables(); saveProject(true); pushHistory(); }
+
+let copiedTrainTimes = null;
+function copyTrain(id) {
+  const t = project.trains.find(x => x.id === id);
+  if(t) { copiedTrainTimes = JSON.parse(JSON.stringify(t.times)); alert(`列車「${t.name}」の時刻をコピーしました。`); }
+}
+function pasteTrain(id) {
+  if(!copiedTrainTimes) { alert('先に「⎘(コピー)」ボタンを押してください。'); return; }
+  const t = project.trains.find(x => x.id === id);
+  if(t && confirm(`「${t.name}」の時刻を上書きしますか？`)) { t.times = JSON.parse(JSON.stringify(copiedTrainTimes)); saveProject(true); pushHistory(); renderAll(); }
+}
+function duplicateTrain(id) {
+  const t = project.trains.find(x => x.id === id); if(!t) return;
+  const newTrain = JSON.parse(JSON.stringify(t)); newTrain.id = 't' + Date.now().toString(36); newTrain.name += ' (コピー)';
+  project.trains.splice(project.trains.findIndex(x => x.id === id) + 1, 0, newTrain); saveProject(true); pushHistory(); renderAll();
+}
+function deleteTrain(id){
+  if(confirm('この列車を削除しますか？')) { project.trains = project.trains.filter(t=>t.id!==id); renderTimetables(); updateStatusBar(); saveProject(true); pushHistory(); }
+}
+
+function renderTimetables(){ renderTable('down'); renderTable('up'); }
+function renderTable(dir){
+  const table = document.getElementById('tt-'+dir);
+  const trains = project.trains.filter(t=>t.dir===dir);
+  const stations = project.stations;
+  
+  let thead = `<thead><tr><th class="st-col" style="border-bottom:none;"></th><th class="st-type" style="border-bottom:none;"></th>`;
+  trains.forEach(t=>{
+    thead+=`<th class="train-col">
+      <div class="train-actions">
+        <button class="act-btn" onclick="copyTrain('${t.id}')" title="コピー (Copy)">⎘</button>
+        <button class="act-btn" onclick="pasteTrain('${t.id}')" title="貼付 (Paste)">↳</button>
+        <button class="act-btn" onclick="duplicateTrain('${t.id}')" title="複製 (Duplicate)">⧉</button>
+        <button class="act-btn danger" onclick="deleteTrain('${t.id}')" title="削除 (Delete)">✕</button>
+      </div>
+    </th>`;
+  });
+  thead += `<th class="train-col"><button class="add-train-btn" onclick="addTrain('${dir}')">追加</button></th></tr>`;
+  
+  thead += `<tr><th class="st-col" style="border-bottom:none;border-top:none;"></th><th class="st-type" style="border-bottom:none;border-top:none;"></th>`;
+  trains.forEach(t=>thead+=`<th class="train-col"><div class="color-dot" style="background:${t.color}" onclick="openColorPicker(event, '${t.id}')"></div></th>`);
+  thead += `<th></th></tr>`;
+  
+  thead += `<tr><th class="st-col" style="border-bottom:none;border-top:none;">種別</th><th class="st-type" style="border-bottom:none;border-top:none;"></th>`;
+  trains.forEach(t=>thead+=`<th class="train-col"><textarea class="th-input th-type-input" placeholder="普通" onchange="updateTrain('${t.id}','type',this.value)">${esc(t.type)}</textarea></th>`);
+  thead += `<th></th></tr>`;
+  
+  thead += `<tr><th class="st-col" style="border-top:none;">列車名</th><th class="st-type" style="border-top:none;"></th>`;
+  trains.forEach(t=>thead+=`<th class="train-col"><textarea class="th-input th-name-input" placeholder="列車名" onchange="updateTrain('${t.id}','name',this.value)">${esc(t.name)}</textarea></th>`);
+  thead += `<th></th></tr></thead>`;
+  
+  let tbody = `<tbody>`;
+  const displayStations = dir === 'down' ? stations.map((s,i)=>({s, i})) : [...stations].map((s,i)=>({s, i})).reverse();
+  
+  displayStations.forEach(({s, i})=>{
+    const rIdxArr = i * 2;
+    const rIdxDep = i * 2 + 1;
+    
+    tbody += `<tr><th class="st-col" style="border-bottom:none;">${esc(s.name)}</th><th class="st-type">着</th>`;
+    trains.forEach(t=>{
+      const vA = t.times[i].arr || ''; 
+      const vD = t.times[i].dep || ''; 
+      const pA = PASS_MARKS.includes(vA);
+      const pD = PASS_MARKS.includes(vD);
+      // 両方パス、または片方パスでもう一方が空欄の場合は結合して１つの「レ」を表示
+      const fullPass = (pA && pD) || (pA && vD === '') || (pD && vA === '');
+      
+      if (fullPass) {
+        const pm = pA ? vA : vD;
+        tbody += `<td class="train-col" rowspan="2"><input class="time-input pass" type="text" data-tid="${t.id}" data-rid="${rIdxArr}" value="${pm}" placeholder="・・" onfocus="this.dataset.old=this.value" onchange="updateTime('${t.id}',${i},'arr',this)"></td>`;
+      } else {
+        // 通過時刻（例: 着時刻に「12:30」、発時刻に「レ」）に対応するため、個別のセルとして描画
+        tbody += `<td class="train-col"><input class="time-input ${pA?'pass':''}" type="text" data-tid="${t.id}" data-rid="${rIdxArr}" value="${vA}" placeholder="・・" onfocus="this.dataset.old=this.value" onchange="updateTime('${t.id}',${i},'arr',this)"></td>`;
+      }
+    }); 
+    tbody += `<td></td></tr>`;
+    
+    tbody += `<tr><th class="st-col" style="border-top:none;"></th><th class="st-type">発</th>`;
+    trains.forEach(t=>{
+      const vA = t.times[i].arr || ''; 
+      const vD = t.times[i].dep || ''; 
+      const pA = PASS_MARKS.includes(vA);
+      const pD = PASS_MARKS.includes(vD);
+      const fullPass = (pA && pD) || (pA && vD === '') || (pD && vA === '');
+      
+      if (!fullPass) {
+        tbody += `<td class="train-col"><input class="time-input ${pD?'pass':''}" type="text" data-tid="${t.id}" data-rid="${rIdxDep}" value="${vD}" placeholder="・・" onfocus="this.dataset.old=this.value" onchange="updateTime('${t.id}',${i},'dep',this)"></td>`;
+      }
+    }); 
+    tbody += `<td></td></tr>`;
+  });
+  tbody += `</tbody>`; table.innerHTML = thead + tbody;
+}
+
+function updateTime(id, stIdx, key, inputEl){
+  const t = project.trains.find(x=>x.id===id); if(!t) return;
+  const oldRaw = inputEl.dataset.old || ''; let newRaw = inputEl.value.trim();
+  
+  if(/^\d{3,4}$/.test(newRaw)){ newRaw = newRaw.padStart(4,'0'); newRaw = newRaw.slice(0,2) + ':' + newRaw.slice(2,4); }
+  
+  t.times[stIdx][key] = newRaw;
+  
+  // 結合セルを空にした場合、もう片方のパス記号もクリアする
+  if(key === 'arr' && newRaw === '' && PASS_MARKS.includes(t.times[stIdx].dep)) t.times[stIdx].dep = '';
+  if(key === 'dep' && newRaw === '' && PASS_MARKS.includes(t.times[stIdx].arr)) t.times[stIdx].arr = '';
+
+  // 片方が空でパス記号が入力されたら、内部的にもう片方にも自動的にパス記号を埋める
+  if(key === 'arr' && PASS_MARKS.includes(newRaw) && t.times[stIdx].dep === '') t.times[stIdx].dep = newRaw;
+  if(key === 'dep' && PASS_MARKS.includes(newRaw) && t.times[stIdx].arr === '') t.times[stIdx].arr = newRaw;
+
+  const shiftCheck = document.getElementById(t.dir === 'down' ? 'shiftDownCheck' : 'shiftUpCheck');
+  if (shiftCheck && shiftCheck.checked && oldRaw && newRaw && oldRaw !== newRaw && !PASS_MARKS.includes(newRaw) && !PASS_MARKS.includes(oldRaw)) {
+    const oldM = timeToMin(oldRaw), newM = timeToMin(newRaw);
+    if (oldM !== null && newM !== null) { shiftSubsequentTimes(t, stIdx, key, newM - oldM); }
+  }
+  
+  saveProject(true); pushHistory(); drawDiagram(); 
+  
+  const tid = inputEl.dataset.tid; const rid = inputEl.dataset.rid;
+  renderTimetables();
+  
+  // 再描画後にフォーカスを復元する
+  setTimeout(() => {
+    const el = document.querySelector(`#view-${currentView} .time-input[data-tid="${tid}"][data-rid="${rid}"]`);
+    if(el) { el.focus(); el.select(); }
+  }, 10);
+}
+
+function shiftSubsequentTimes(train, stIdx, key, delta) {
+  const arr = train.dir === 'down' ? 1 : -1;
+  const end = train.dir === 'down' ? train.times.length : -1;
+  for (let i = stIdx; i !== end; i += arr) {
+    if (i === stIdx) { if (key === 'arr' && train.times[i].dep) train.times[i].dep = addMinutes(train.times[i].dep, delta); }
+    else {
+      if (train.times[i].arr) train.times[i].arr = addMinutes(train.times[i].arr, delta);
+      if (train.times[i].dep) train.times[i].dep = addMinutes(train.times[i].dep, delta);
+    }
+  }
+}
+function addMinutes(timeStr, delta) {
+  const m = timeToMin(timeStr); if (m === null) return timeStr; 
+  let newM = m + delta; if (newM < 0) newM += 24 * 60; 
+  return String(Math.floor(newM / 60) % 48).padStart(2,'0') + ':' + String(newM % 60).padStart(2,'0');
+}
+function timeToMin(str){
+  if(!str || !str.includes(':')) return null;
+  const[h,m]=str.split(':').map(Number); return isNaN(h)||isNaN(m)?null:h*60+m;
+}
+
+const canvas=document.getElementById('diagramCanvas');
+const ctx=canvas.getContext('2d');
+const D = { paddingLeft:100, paddingTop:60, paddingRight:40, paddingBottom:40, hourW:200, stationH:70, startHour:4, endHour:25 };
+
+function drawDiagram(){
+  const stations=project.stations||[]; const trains=project.trains||[];
+  const diagramW = (D.endHour-D.startHour) * D.hourW * zoom, diagramH = Math.max(1, stations.length - 1) * D.stationH * zoom;
+  
+  const viewEl = document.getElementById('view-diagram'); canvas.style.display = 'none';
+  const totalW = Math.max(D.paddingLeft + diagramW + D.paddingRight, viewEl.clientWidth);
+  const totalH = Math.max(D.paddingTop + diagramH + D.paddingBottom, viewEl.clientHeight);
+  canvas.style.display = 'block'; canvas.width = totalW; canvas.height = totalH;
+
+  const cBg=cssVar('--bg'), cBg2=cssVar('--bg2'), cText=cssVar('--text'), cText2=cssVar('--text2'), cBorder=cssVar('--border');
+
+  ctx.fillStyle=cBg; ctx.fillRect(0,0,totalW,totalH); ctx.fillStyle=cBg2; ctx.fillRect(0,0,D.paddingLeft,totalH);
+  ctx.strokeStyle=cBorder; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(D.paddingLeft,0); ctx.lineTo(D.paddingLeft,totalH); ctx.stroke();
+
+  for(let h=D.startHour; h<=D.endHour; h++){
+    const x = D.paddingLeft+(h*60-D.startHour*60)*(D.hourW*zoom/60);
+    ctx.strokeStyle=h%6===0 ? cBorder : cssVar('--border2'); ctx.lineWidth=h%6===0 ? 2 : 1;
+    ctx.beginPath(); ctx.moveTo(x,D.paddingTop-20); ctx.lineTo(x,totalH-D.paddingBottom); ctx.stroke();
+    if(h<D.endHour){
+      const xh = D.paddingLeft+((h*60+30)-D.startHour*60)*(D.hourW*zoom/60);
+      ctx.strokeStyle=cssVar('--border2'); ctx.lineWidth=1; ctx.setLineDash([4,4]);
+      ctx.beginPath(); ctx.moveTo(xh,D.paddingTop); ctx.lineTo(xh,totalH-D.paddingBottom); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=cText2; ctx.font=`bold ${Math.round(14*zoom)}px 'Courier New',monospace`; ctx.textAlign='center'; ctx.textBaseline='bottom';
+      ctx.fillText((h%24).toString().padStart(2,'0'), x, D.paddingTop-6);
+    }
+  }
+
+  stations.forEach((s,si)=>{
+    const y = D.paddingTop+si*D.stationH*zoom, isBound = (si===0 || si===stations.length-1);
+    ctx.strokeStyle=isBound ? cBorder : cssVar('--border2'); ctx.lineWidth=isBound ? 2 : 1;
+    ctx.beginPath(); ctx.moveTo(D.paddingLeft, y); ctx.lineTo(D.paddingLeft + diagramW, y); ctx.stroke();
+    ctx.fillStyle=cText; ctx.font=`bold ${Math.round(14*zoom)}px sans-serif`; ctx.textAlign='right'; ctx.textBaseline='middle';
+    ctx.fillText(s.name, D.paddingLeft-14, y);
+  });
+
+  const labelMode = document.getElementById('diagramLabelMode') ? document.getElementById('diagramLabelMode').value : 'full';
+  const drawnLabels = []; 
+  
+  // 衝突判定用の線分保存配列
+  const drawnLines = []; 
+
+  trains.forEach(tr=>{
+    const pts=[];
+    const startIdx = tr.dir === 'down' ? 0 : stations.length - 1;
+    const endIdx = tr.dir === 'down' ? stations.length : -1;
+    const step = tr.dir === 'down' ? 1 : -1;
+
+    for (let si = startIdx; si !== endIdx; si += step) {
+      const t = tr.times[si]; if(!t) continue;
+      const mArr = timeToMin(t.arr), mDep = timeToMin(t.dep);
+      if(mArr!==null) pts.push({t: mArr, x:D.paddingLeft+(mArr-D.startHour*60)*(D.hourW*zoom/60), y:D.paddingTop+si*D.stationH*zoom, stIdx: si});
+      if(mDep!==null) pts.push({t: mDep, x:D.paddingLeft+(mDep-D.startHour*60)*(D.hourW*zoom/60), y:D.paddingTop+si*D.stationH*zoom, stIdx: si});
+    }
+
+    if(pts.length<2) return;
+    
+    // 衝突判定用に線分を保存（同じ駅での到着→出発による停止時間は除外）
+    for(let i=0; i<pts.length-1; i++) {
+      if(pts[i].y !== pts[i+1].y) {
+        drawnLines.push({ train: tr, p1: pts[i], p2: pts[i+1] });
+      }
+    }
+
+    ctx.strokeStyle = tr.color; ctx.lineWidth = 2 * zoom;
+    ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+    for(let i=1; i<pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.stroke();
+    
+    if(labelMode !== 'none') {
+      let labelText = labelMode === 'name' ? tr.name : ((tr.type||'')+' '+tr.name).trim();
+      if(!labelText) return;
+
+      const startPt = pts[0];
+      ctx.font=`bold ${Math.round(12*zoom)}px sans-serif`;
+      
+      let lx = startPt.x + 4;
+      let ly = startPt.y - 6;
+      const textW = ctx.measureText(labelText).width;
+      const textH = 16 * zoom;
+
+      let isOverlap = true;
+      let attempts = 0;
+      while(isOverlap && attempts < 10) {
+        isOverlap = drawnLabels.some(l => lx < l.x + l.w && lx + textW > l.x && ly - textH < l.y && ly > l.y - l.h);
+        if(isOverlap) { ly += 14; attempts++; } 
+      }
+      drawnLabels.push({x: lx, y: ly, w: textW, h: textH});
+
+      ctx.fillStyle = cBg;
+      ctx.fillRect(lx - 2, ly - textH + 2, textW + 4, textH);
+      
+      ctx.fillStyle = tr.color; ctx.textAlign='left'; ctx.textBaseline='bottom';
+      ctx.fillText(labelText, lx, ly);
+    }
+  });
+
+  // 衝突判定の実行（単線・複線の設定を加味）
+  const collisionToggle = document.getElementById('collisionToggle');
+  const collisionAlert = document.getElementById('collisionAlert');
+  if (collisionToggle && collisionToggle.checked) {
+    let collisionList = [];
+    
+    for(let a=0; a < drawnLines.length; a++) {
+      for(let b=a+1; b < drawnLines.length; b++) {
+        const lineA = drawnLines[a];
+        const lineB = drawnLines[b];
+        
+        // 同じ列車同士は比較しない
+        if (lineA.train.id === lineB.train.id) continue;
+        
+        // 外積を用いた交差判定（接点は含まないため < 0）
+        let ta = (lineB.p1.x - lineB.p2.x) * (lineA.p1.y - lineB.p1.y) + (lineB.p1.y - lineB.p2.y) * (lineB.p1.x - lineA.p1.x);
+        let tb = (lineB.p1.x - lineB.p2.x) * (lineA.p2.y - lineB.p1.y) + (lineB.p1.y - lineB.p2.y) * (lineB.p1.x - lineA.p2.x);
+        let tc = (lineA.p1.x - lineA.p2.x) * (lineB.p1.y - lineA.p1.y) + (lineA.p1.y - lineA.p2.y) * (lineA.p1.x - lineB.p1.x);
+        let td = (lineA.p1.x - lineA.p2.x) * (lineB.p2.y - lineA.p1.y) + (lineA.p1.y - lineA.p2.y) * (lineA.p1.x - lineB.p2.x);
+
+        // 線分同士が交差している場合
+        if (tc * td < 0 && ta * tb < 0) {
+          // 交差座標の算出
+          const r = Math.abs(ta) / (Math.abs(ta) + Math.abs(tb));
+          const crossX = lineA.p1.x + r * (lineA.p2.x - lineA.p1.x);
+          const crossY = lineA.p1.y + r * (lineA.p2.y - lineA.p1.y);
+          
+          // 交差した駅間の特定と単線/複線の確認
+          let crossSt1 = '', crossSt2 = '';
+          let trackType = 'single';
+          for (let i=0; i<stations.length-1; i++) {
+            const y1 = D.paddingTop + i * D.stationH * zoom;
+            const y2 = D.paddingTop + (i+1) * D.stationH * zoom;
+            // 交差点が含まれる区間を探す（誤差0.5を許容）
+            if (crossY >= y1 - 0.5 && crossY <= y2 + 0.5) {
+              crossSt1 = stations[i].name;
+              crossSt2 = stations[i+1].name;
+              trackType = stations[i].trackType || 'single';
+              break;
+            }
+          }
+
+          // 複線区間かつ、進行方向が違う（すれ違い）場合は衝突とみなさない
+          if (trackType === 'double' && lineA.train.dir !== lineB.train.dir) {
+            continue;
+          }
+
+          // 重複を防ぐためのキー
+          const key = [lineA.train.id, lineB.train.id].sort().join('-') + '-' + crossSt1 + '-' + crossSt2;
+          if (!collisionList.find(c => c.key === key)) {
+            collisionList.push({
+              key: key, st1: crossSt1, st2: crossSt2, trA: lineA.train, trB: lineB.train
+            });
+          }
+
+          // 交差ポイントに赤いマークを描画
+          ctx.fillStyle = 'rgba(220, 38, 38, 0.8)';
+          ctx.beginPath(); 
+          ctx.arc(crossX, crossY, 6 * zoom, 0, Math.PI*2); 
+          ctx.fill();
+          ctx.strokeStyle = '#fff'; 
+          ctx.lineWidth = 1; 
+          ctx.stroke();
+        }
+      }
+    }
+    
+    // 警告ポップアップの表示
+    if (collisionAlert) {
+      if(collisionList.length > 0) {
+        let html = `<div style="font-weight:bold; font-size:14px; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.5); padding-bottom:4px; display:flex; justify-content:space-between; align-items:center;"><span>△ 衝突警告 (${collisionList.length}件)</span><button style="background:transparent; border:none; color:#fff; cursor:pointer; font-size:16px;" onclick="document.getElementById('collisionAlert').style.display='none'">✕</button></div><ul style="padding-left:20px; margin:0; font-size:13px; line-height:1.5;">`;
+        collisionList.forEach(c => {
+          const nameA = c.trA.name ? c.trA.name : c.trA.id;
+          const nameB = c.trB.name ? c.trB.name : c.trB.id;
+          html += `<li style="margin-bottom:6px;"><b>${esc(c.st1)} 〜 ${esc(c.st2)} 間</b><br><span style="color:#ffd54f;">${esc(nameA)}</span> と <span style="color:#ffd54f;">${esc(nameB)}</span></li>`;
+        });
+        html += `</ul>`;
+        collisionAlert.innerHTML = html;
+        collisionAlert.style.display = 'block';
+      } else {
+        collisionAlert.style.display = 'none';
+      }
+    }
+  } else {
+    if(collisionAlert) collisionAlert.style.display = 'none';
+  }
+}
+
+function zoomIn(){ zoom=Math.min(zoom*1.25,3); drawDiagram(); }
+function zoomOut(){ zoom=Math.max(zoom/1.25,0.4); drawDiagram(); }
+function resetZoom(){ zoom=1; drawDiagram(); }
+function cssVar(name){ return getComputedStyle(document.body).getPropertyValue(name).trim(); }
+
+function saveProject(silent = false){
+  if(!project) return;
+  if(project.id==='demo') { project.id = 'p_' + Date.now().toString(36); sessionStorage.setItem('diastar_current', project.id); }
+  const list = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+  const idx = list.findIndex(p=>p.id===project.id);
+  if(idx>=0) list[idx]=project; else list.push(project);
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(list));
+}
+
+function exportDataJSON(){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(project,null,2)],{type:'application/json'}));
+  a.download=(project.name||'diagram')+'.json'; a.click();
+}
+function loadFile(e){
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      let p = migrateProjectData(JSON.parse(ev.target.result));
+      const list = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+      const idx = list.findIndex(x=>x.id===p.id); if(idx>=0) list[idx]=p; else list.push(p);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); sessionStorage.setItem('diastar_current', p.id); window.location.reload(); 
+    } catch { alert('読み込みに失敗しました。'); }
+  };
+  reader.readAsText(file); e.target.value = ''; 
+}
+function updateStatusBar(){
+  document.getElementById('sb-stations').textContent='駅数: '+(project.stations||[]).length;
+  document.getElementById('sb-trains').textContent='列車数: '+(project.trains||[]).length;
+}
+function renderAll(){ renderStations(); renderTimetables(); if(currentView==='diagram') drawDiagram(); }
+</script>
+</body>
+</html>

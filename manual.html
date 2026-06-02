@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>マニュアル・Q&A｜AIダイヤグラム作成ツール｜スジ屋</title>
+<style>
+/* ===== THEMES (index.htmlと完全統一) ===== */
+:root {
+  --accent: #0056b3; 
+  --accent-dim: rgba(0, 86, 179, 0.1);
+}
+[data-theme="dark"] {
+  --bg: #121212; --bg2: #1e1e1e; --bg3: #2d2d2d; --bg4: #3d3d3d;
+  --accent: #4f8ef5; --accent-dim: rgba(79,142,245,0.15);
+  --text: #ffffff; --text2: #aaaaaa; --text3: #777777;
+  --border: #333333; --border2: #444444;
+  --red: #e57373;
+}
+[data-theme="light"] {
+  --bg: #f8fafc; --bg2: #ffffff; --bg3: #f1f5f9; --bg4: #e2e8f0;
+  --accent: #0056b3; --accent-dim: rgba(0,86,179,0.08);
+  --text: #222222; --text2: #555555; --text3: #888888;
+  --border: #dddddd; --border2: #cccccc;
+  --red: #cc0000;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; border-radius: 0 !important; }
+button, input, select { appearance: none; -webkit-appearance: none; }
+
+body { 
+  background: var(--bg); color: var(--text); 
+  font-family: 'Noto Sans JP', "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif; 
+  min-height: 100vh; overflow-x: hidden; line-height: 1.6; font-size: 16px;
+  transition: background 0.2s, color 0.2s;
+  display: flex; flex-direction: column;
+}
+
+/* ===== HEADER ===== */
+header {
+  background-color: var(--bg2); height: 70px; padding: 0 4%;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 2px solid var(--accent); position: fixed; width: 100%;
+  top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+.logo {
+  text-decoration: none; color: var(--accent); font-size: clamp(16px, 2vw, 22px);
+  font-weight: 700; line-height: 1.2; display: flex; align-items: center; gap: 10px;
+}
+.logo-mark {
+  width: 32px; height: 32px; border: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+}
+.logo-mark svg { width: 18px; height: 18px; stroke: var(--accent); fill: none; stroke-width: 2; }
+.logo span {
+  display: block; font-size: clamp(10px, 1.2vw, 12px); color: var(--text2);
+  margin-top: 2px; font-weight: 600;
+}
+
+.header-links { display: flex; gap: 24px; align-items: center; }
+.header-links a {
+  text-decoration: none; color: var(--text); font-size: 15px; font-weight: 700;
+  transition: 0.2s; padding-bottom: 5px; border-bottom: 3px solid transparent;
+}
+.header-links a:hover, .header-links a.active { color: var(--accent); border-color: var(--accent); }
+
+.theme-group { display: flex; gap: 8px; margin-left: 10px; padding-left: 20px; border-left: 1px solid var(--border2); }
+.theme-dot { width: 22px; height: 22px; border: 2px solid var(--border2); cursor: pointer; transition: 0.2s; }
+.theme-dot:hover, .theme-dot.active { border-color: var(--accent); }
+.theme-dot[data-t="dark"] { background: #121212; }
+.theme-dot[data-t="light"] { background: #ffffff; }
+
+.hamburger {
+  display: none; flex-direction: column; justify-content: center; align-items: center;
+  width: 44px; height: 44px; cursor: pointer; gap: 6px; background: none; border: none;
+}
+.hamburger span {
+  display: block; width: 28px; height: 3px; background: var(--accent);
+  transition: all 0.3s ease; transform-origin: center;
+}
+.hamburger.open span:nth-child(1) { transform: translateY(9px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburger.open span:nth-child(3) { transform: translateY(-9px) rotate(-45deg); }
+
+.mobile-nav {
+  display: none; position: fixed; top: 70px; left: 0; width: 100%;
+  background: var(--bg2); border-bottom: 2px solid var(--accent);
+  z-index: 999; box-shadow: 0 8px 24px rgba(0,0,0,0.1); flex-direction: column; padding: 10px 0;
+}
+.mobile-nav a {
+  text-decoration: none; color: var(--text); font-size: 16px; font-weight: 700;
+  padding: 16px 6%; border-left: 4px solid transparent; transition: all 0.2s;
+}
+.mobile-nav a.active, .mobile-nav a:hover { color: var(--accent); border-left-color: var(--accent); background: var(--bg3); }
+
+/* ===== MAIN (MANUAL CONTENT) ===== */
+main { max-width: 900px; margin: 120px auto 60px; padding: 0 4%; flex: 1; }
+
+h1 { font-size: clamp(24px, 4vw, 32px); font-weight: 800; margin-bottom: 30px; border-bottom: 3px solid var(--accent); padding-bottom: 10px; }
+h2 { font-size: 20px; font-weight: 700; margin: 40px 0 20px; padding-left: 12px; border-left: 5px solid var(--accent); color: var(--text); }
+h3 { font-size: 16px; font-weight: 700; margin: 24px 0 10px; color: var(--accent); }
+
+p { margin-bottom: 16px; color: var(--text2); font-weight: 500; }
+ul, ol { margin-bottom: 24px; padding-left: 24px; color: var(--text2); }
+li { margin-bottom: 8px; font-weight: 500; }
+
+blockquote {
+  background: var(--bg3); border-left: 4px solid var(--border2); padding: 16px; margin-bottom: 24px; font-size: 14px;
+}
+blockquote p { margin-bottom: 0; }
+
+/* TABLE FOR SHORTCUTS */
+.manual-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 15px; }
+.manual-table th, .manual-table td { padding: 12px 16px; border: 1px solid var(--border); text-align: left; }
+.manual-table th { background: var(--bg3); font-weight: 700; color: var(--text); width: 30%; }
+.manual-table td { background: var(--bg2); }
+
+/* ===== FOOTER ===== */
+footer { 
+  background: var(--bg2); border-top: 1px solid var(--border); 
+  padding: 40px 4% 20px; margin-top: auto;
+}
+.footer-inner { max-width: 1000px; margin: 0 auto; }
+.footer-nav { display: flex; gap: 20px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap; }
+.footer-nav a { color: var(--accent); text-decoration: none; font-weight: 700; font-size: 15px; }
+.footer-nav a:hover { text-decoration: underline; }
+.footer-disclaimer { font-size: 12px; color: var(--text3); line-height: 1.6; margin-bottom: 20px; text-align: center; }
+.footer-copyright { text-align: center; font-size: 12px; color: var(--text3); font-weight: 600; }
+
+@media (max-width: 768px) {
+  .header-links { display: none; }
+  .hamburger { display: flex; }
+  main { margin-top: 100px; }
+}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-theme="light">
+
+<header>
+  <a href="index.html" class="logo">
+    <div class="logo-mark"><svg viewBox="0 0 16 16"><polyline points="2,12 5,8 8,10 11,5 14,7"/><line x1="2" y1="14" x2="14" y2="14"/></svg></div>
+    <div>スジ屋<span>AIダイヤグラム作成ツール</span></div>
+  </a>
+  <div class="header-links">
+    <a href="index.html">ホーム</a>
+    <a href="ddiagram_fixed.html">ダイヤエディタ</a>
+    <a href="manual.html" class="active">マニュアル・Q&A</a>
+    <div class="theme-group" id="themeGroup">
+      <div class="theme-dot" data-t="dark" title="ダークモード" onclick="setTheme('dark')"></div>
+      <div class="theme-dot" data-t="light" title="ライトモード" onclick="setTheme('light')"></div>
+    </div>
+  </div>
+  <button class="hamburger" id="hamburgerBtn">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<nav class="mobile-nav" id="mobileNav">
+  <a href="index.html">ホーム</a>
+  <a href="diagram_fixed.html">ダイヤエディタ</a>
+  <a href="manual.html" class="active">マニュアル・Q&A</a>
+  <div style="padding: 16px 6%; display:flex; gap:10px; border-top: 1px solid var(--border2); margin-top: 10px;">
+    <span style="font-size:14px; font-weight:bold; color:var(--text2);">テーマ切替:</span>
+    <div class="theme-dot" data-t="dark" onclick="setTheme('dark')" style="border-color:var(--text);"></div>
+    <div class="theme-dot" data-t="light" onclick="setTheme('light')" style="border-color:var(--text);"></div>
+  </div>
+</nav>
+
+<main>
+  <h1>マニュアル・Q&A</h1>
+  <p>ダイヤ編集の基本操作方法、ダイヤ検証機能（衝突チェック）、および出力方法について解説します。</p>
+
+  <h2>1. 駅リストの管理と「単線・複線」の設定</h2>
+  <p>画面左側のメニュー（モバイル環境では ≡ ボタンで展開）の「駅リスト」から、路線の駅に関する設定を編集できます。</p>
+  <ul>
+    <li><strong>駅の追加・削除・並び替え:</strong> 下部の入力欄から駅を追加できます。「≡」をドラッグして順序変更、「✕」で駅の削除が可能です。</li>
+    <li><strong>単線・複線の切り替え:</strong> 駅と駅の間に表示されているボタン（「｜単線区間」または「‖複線区間」）をクリックすることで、その区間の線路構造を切り替えることができます。この設定は、後述する<strong>衝突チェック（ダイヤ検証）機能の判定基準</strong>として使用されます。</li>
+  </ul>
+
+  <h2>2. 時刻表の入力と便利機能</h2>
+  <p>「時刻表(下り)」「時刻表(上り)」タブにて、ダイヤの各時刻を打ち込みます。</p>
+  
+  <h3>時刻の自動整形</h3>
+  <p>「0600」や「1845」のように4桁の数字を連続で入力してEnterキーを押す（または別のセルに移動する）と、自動的に「06:00」「18:45」の形式に整形されます。</p>
+
+  <h3>通過時刻の設定</h3>
+  <p>駅を通過する列車の時刻を表現する場合、<strong>「着時刻」のセルに通過する時間を入力し、「発時刻」のセルに「レ」を入力</strong>してください。これにより、実際の鉄道ダイヤと同じように通過時刻を表現でき、ダイヤグラムの描画にも正確に反映されます。（着発の両方に「レ」を入力すると、セルが上下で一体化し単一の通過マークになります。）</p>
+
+  <h3>後続一括シフト機能（連動）</h3>
+  <p>時刻表上部の「時刻変更時、後続もずらす」にチェックを入れた状態で任意の時刻を変更すると、<strong>その列車以降の駅の全時刻が自動的に同じ分数だけ進む／戻る</strong>ようになります。駅間の所要時間を保ったままスジ全体をずらす際に必須の機能です。</p>
+
+  <h3>特殊記号の入力</h3>
+  <p>セルを選択すると表示されるクイックメニュー、または設定したショートカットキーで記号を入力できます。</p>
+  <ul>
+    <li><strong>レ :</strong> 駅を「通過」する場合に使用します。</li>
+    <li><strong>|| :</strong> 他の路線を経由する場合などに使用します。</li>
+    <li><strong>＝ :</strong> 列車がその駅で終着、または途中止まりになる場合に使用します。</li>
+  </ul>
+
+  <h2>3. 衝突チェック機能（ダイヤ検証）</h2>
+  <p>エディタ上部ツールバーの<strong>「衝突チェック」</strong>のチェックボックスをオンにすると、作成したダイヤグラム上に物理的に矛盾・支障している箇所がないかを自動で検証し、警告を出します。</p>
+  <ul>
+    <li><strong>単線区間での判定:</strong> 上下線列車の「駅間でのすれ違い」、および同方向列車の「駅間での追い越し」を衝突として検知します。</li>
+    <li><strong>複線区間での判定:</strong> 上下線列車のすれ違いは正常運行として検知しません。同方向列車の「駅間での追い越し」のみを衝突として検知します。</li>
+  </ul>
+  <p>衝突が検知された場合、ダイヤグラム上の該当箇所に赤丸が表示され、画面右下に「どの駅間で、どの列車同士が支障しているか」のリストが警告ポップアップとして表示されます。</p>
+
+  <h2>4. AIモード切替スイッチ（準備中）</h2>
+  <p>ツールバー中央に設置されている「手動 / AIモード」のトグルスイッチは、今後のアップデートに向けた<strong>準備工事（モックアップ）</strong>です。<br>
+  現在は手動作成モードのみが利用可能ですが、将来的にはこのスイッチをオンにすることで、<strong>「沿線人口や流動データの自動解析による最適ダイヤの生成」</strong>や<strong>「ユーザーの要望を学習したダイヤの自動調整」</strong>機能などが解放される予定です。<br>※あくまで予定であり実装されない可能性もあります。</p>
+
+  <h2>5. ショートカットキー設定</h2>
+  <p>ツールバーの「設定」ボタンから、特殊記号の入力を任意のキーボードキーに割り当てることができます。デフォルトは以下の通りです。</p>
+  <table class="manual-table">
+    <tr><th>レ (通過)</th><td>R キー</td></tr>
+    <tr><th>|| (他線経由)</th><td>L キー</td></tr>
+    <tr><th>＝ (途中止まり)</th><td>- (マイナス) キー</td></tr>
+    <tr><th>空欄に戻す</th><td>Backspace / Delete キー</td></tr>
+  </table>
+
+  <h2>6. 出力機能とトラブルシューティング</h2>
+  <p>作成したデータは、ツールバー右側から各種形式で出力・保存できます。</p>
+  <ul>
+    <li><strong>保存 (DL):</strong> 編集中の全データを <code>.json</code> 形式でダウンロードします。次回「開く」ボタンから読み込むことで再編集が可能です。</li>
+    <li><strong>CSV出力:</strong> 時刻表データをExcel等で読み込み可能なCSV形式で出力します。</li>
+    <li><strong>画像保存 (PNG):</strong> 表示中の時刻表またはダイヤグラムを画像として保存します。</li>
+  </ul>
+
+  <blockquote>
+    <p><strong>【重要】画像出力（PNG）が機能しない・表示が崩れる場合</strong><br>
+    お使いのブラウザの設定や、路線データ（駅数・列車数）が極端に多い場合、画像生成処理が完了しないことがあります。<br>
+    その場合は、ツールバーの<strong>「印刷 / PDF」</strong>ボタン、またはブラウザ標準の印刷機能（<code>Ctrl + P</code> または <code>Cmd + P</code>）を実行し、送信先を「PDFに保存」にして出力してください。印刷用に最適化されたレイアウトで出力が可能です。</p>
+  </blockquote>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-nav">
+      <a href="index.html">ホーム</a>
+      <a href="diagram_fixed.html">ダイヤエディタ</a>
+      <a href="manual.html">マニュアル・Q&A</a>
+    </div>
+    <div class="footer-disclaimer">
+      【免責事項】本サイト（AIダイヤグラム作成ツール｜スジ屋）で提供している機能やマニュアル、の内容は生成AIを活用して出力したものです。情報の正確性・妥当性について保証するものではなく、本ツールの利用により生じたいかなる損害についても当方は一切の責任を負いかねます。<br>
+      お問い合わせは「おおいた地域交通見える化ボード」の「このサイトについて」ページよりお願いいたします。
+    </div>
+    <div class="footer-copyright">
+      &copy; 2026 AIダイヤグラム作成ツール｜スジ屋. All rights reserved.
+    </div>
+  </div>
+</footer>
+
+<script>
+const THEME_KEY = 'diastar_theme';
+function setTheme(t) {
+  document.body.setAttribute('data-theme', t);
+  localStorage.setItem(THEME_KEY, t);
+}
+(function(){ const saved = localStorage.getItem(THEME_KEY) || 'light'; setTheme(saved); })();
+
+const hamburgerBtn = document.getElementById('hamburgerBtn');
+const mobileNav    = document.getElementById('mobileNav');
+hamburgerBtn.addEventListener('click', () => {
+    const isOpen = hamburgerBtn.classList.toggle('open');
+    mobileNav.style.display = isOpen ? 'flex' : 'none';
+});
+</script>
+</body>
+</html>
