@@ -159,11 +159,11 @@ header {
   border: none; background: transparent; color: inherit; 
   font-family: inherit; font-size: 12px; font-weight: 600; outline: none; 
   writing-mode: vertical-rl; text-orientation: upright;
-  text-align: start; /* 頭（書き始め）を上にする */
+  text-align: start;
   padding: 6px 0;
-  display: block;    /* ブロック要素にする */
-  margin: 0 auto;    /* セルの左右中央に寄せる */
-  width: 24px;       /* 横幅を固定して左右ブレを防ぐ */
+  display: block;
+  margin: 0 auto;
+  width: 24px;
   box-sizing: border-box;
 }
 .th-input:focus { background: var(--bg); }
@@ -189,11 +189,21 @@ header {
 .act-btn.danger { color: var(--red); }
 .act-btn.danger:hover { background: rgba(229, 115, 115, 0.2); }
 
+/* ドラッグハンドル */
+.train-drag-handle {
+  text-align: center; font-size: 16px; color: var(--text3);
+  cursor: grab; padding: 3px 0;
+  border-bottom: 1px solid var(--border2);
+  user-select: none; background: var(--bg2);
+  transition: background 0.15s;
+}
+.train-drag-handle:hover { background: var(--bg3); color: var(--text2); }
+
 .time-input {
   width: 100%; height: 100%; border: none; background: transparent; color: var(--text);
   font-family: 'Courier New', monospace; font-size: 13px; font-weight: 700; text-align: center; padding: 6px 0; outline: none;
 }
-.time-input::placeholder { color: var(--text3); opacity: 0.6; } /* 未入力時の「・・」 */
+.time-input::placeholder { color: var(--text3); opacity: 0.6; }
 td[rowspan="2"] .time-input { height: 100%; min-height: 40px; }
 .time-input:focus { background: #e3f2fd; color: #000; z-index: 5; position: relative; outline: 2px solid var(--accent); }
 .time-input.pass { color: var(--text3); font-family: inherit; font-size: 14px; }
@@ -294,13 +304,13 @@ td[rowspan="2"] .time-input { height: 100%; min-height: 40px; }
 /* 印刷・PDF出力用スタイル */
 @media print {
   body { background: #fff !important; color: #000 !important; height: auto !important; overflow: visible !important; }
-  header, #toolbar, #sidebar, #statusbar, .view-tabs, .tt-options, .train-actions, .add-train-btn, .mobile-overlay-menu, #quick-input-menu, #colorPicker, .modal-overlay, #collisionAlert, .no-print { display: none !important; }
+  header, #toolbar, #sidebar, #statusbar, .view-tabs, .tt-options, .train-actions, .train-drag-handle, .add-train-btn, .mobile-overlay-menu, #quick-input-menu, #colorPicker, .modal-overlay, #collisionAlert, .no-print { display: none !important; }
   #workspace, #main-content, #view-container, .timetable-wrapper.active, #view-diagram.active { display: block !important; height: auto !important; overflow: visible !important; position: static !important; }
   .paper-table { width: 100% !important; border-collapse: collapse !important; }
   .paper-table th, .paper-table td { border: 1px solid #000 !important; }
   .paper-table .st-col, .paper-table .st-type { position: static !important; background: #fff !important; }
   input, textarea { border: none !important; background: transparent !important; color: #000 !important; outline: none !important; }
-  .time-input::placeholder { color: transparent !important; } /* 印刷時はプレースホルダーを消す */
+  .time-input::placeholder { color: transparent !important; }
   #diagramCanvas { max-width: 100%; }
 }
 </style>
@@ -509,11 +519,10 @@ const COLORS = ['#4f8ef5','#e05a5a','#4caf7d','#d4943a','#a06dd4','#1a1a1a','#88
 const PASS_MARKS = ['レ','||','＝'];
 
 // ===== AI MODE =====
-let currentEditorMode = 'manual'; // 'manual' | 'ai'
+let currentEditorMode = 'manual';
 
 function setEditorMode(mode) {
   if (mode === 'ai') {
-    // 準備中モーダルを表示し、モードはmanualのまま維持
     document.getElementById('aiModeModal').style.display = 'flex';
     return;
   }
@@ -531,7 +540,6 @@ function setEditorMode(mode) {
 function closeAiModeModal() {
   document.getElementById('aiModeModal').style.display = 'none';
 }
-// モーダル外クリックで閉じる
 document.addEventListener('click', function(e) {
   const modal = document.getElementById('aiModeModal');
   if (modal && modal.style.display === 'flex' && e.target === modal) closeAiModeModal();
@@ -799,6 +807,31 @@ function removeStation(i){
 }
 function updateStation(i,key,val){ project.stations[i][key]=val; renderTimetables(); saveProject(true); pushHistory(); }
 
+// ===== 列車の追加 =====
+function addTrain(dir) {
+  const newTrain = {
+    id: 't' + Date.now().toString(36),
+    name: '',
+    type: '',
+    dir: dir,
+    color: COLORS[project.trains.filter(t => t.dir === dir).length % COLORS.length],
+    times: project.stations.map(() => ({ arr: '', dep: '' }))
+  };
+  project.trains.push(newTrain);
+  saveProject(true);
+  pushHistory();
+  renderAll();
+}
+
+// ===== 列車の種別・列車名の更新 =====
+function updateTrain(id, key, val) {
+  const t = project.trains.find(x => x.id === id);
+  if (!t) return;
+  t[key] = val;
+  saveProject(true);
+  pushHistory();
+}
+
 let copiedTrainTimes = null;
 function copyTrain(id) {
   const t = project.trains.find(x => x.id === id);
@@ -818,6 +851,38 @@ function deleteTrain(id){
   if(confirm('この列車を削除しますか？')) { project.trains = project.trains.filter(t=>t.id!==id); renderTimetables(); updateStatusBar(); saveProject(true); pushHistory(); }
 }
 
+// ===== 列車列のドラッグ並び替え =====
+let draggingTrainId = null;
+
+function dragTrainStart(e, id) {
+  draggingTrainId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', id);
+  e.currentTarget.style.opacity = '0.4';
+}
+
+function dragTrainOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+
+function dragTrainDrop(e, targetId) {
+  e.preventDefault();
+  if (!draggingTrainId || draggingTrainId === targetId) return;
+
+  const fromIdx = project.trains.findIndex(t => t.id === draggingTrainId);
+  const toIdx   = project.trains.findIndex(t => t.id === targetId);
+  if (fromIdx === -1 || toIdx === -1) return;
+
+  const [moved] = project.trains.splice(fromIdx, 1);
+  project.trains.splice(toIdx, 0, moved);
+
+  draggingTrainId = null;
+  saveProject(true);
+  pushHistory();
+  renderAll();
+}
+
 function renderTimetables(){ renderTable('down'); renderTable('up'); }
 function renderTable(dir){
   const table = document.getElementById('tt-'+dir);
@@ -826,7 +891,12 @@ function renderTable(dir){
   
   let thead = `<thead><tr><th class="st-col" style="border-bottom:none;"></th><th class="st-type" style="border-bottom:none;"></th>`;
   trains.forEach(t=>{
-    thead+=`<th class="train-col">
+    thead+=`<th class="train-col" draggable="true"
+      ondragstart="dragTrainStart(event,'${t.id}')"
+      ondragend="this.style.opacity='1'"
+      ondragover="dragTrainOver(event)"
+      ondrop="dragTrainDrop(event,'${t.id}')">
+      <div class="train-drag-handle" title="ドラッグで列を移動">≡</div>
       <div class="train-actions">
         <button class="act-btn" onclick="copyTrain('${t.id}')" title="コピー (Copy)">⎘</button>
         <button class="act-btn" onclick="pasteTrain('${t.id}')" title="貼付 (Paste)">↳</button>
@@ -835,7 +905,7 @@ function renderTable(dir){
       </div>
     </th>`;
   });
-  thead += `<th class="train-col"><button class="add-train-btn" onclick="addTrain('${dir}')">追加</button></th></tr>`;
+  thead += `<th class="train-col"><button class="add-train-btn" onclick="addTrain('${dir}')">＋追加</button></th></tr>`;
   
   thead += `<tr><th class="st-col" style="border-bottom:none;border-top:none;"></th><th class="st-type" style="border-bottom:none;border-top:none;"></th>`;
   trains.forEach(t=>thead+=`<th class="train-col"><div class="color-dot" style="background:${t.color}" onclick="openColorPicker(event, '${t.id}')"></div></th>`);
@@ -862,14 +932,12 @@ function renderTable(dir){
       const vD = t.times[i].dep || ''; 
       const pA = PASS_MARKS.includes(vA);
       const pD = PASS_MARKS.includes(vD);
-      // 両方パス、または片方パスでもう一方が空欄の場合は結合して１つの「レ」を表示
       const fullPass = (pA && pD) || (pA && vD === '') || (pD && vA === '');
       
       if (fullPass) {
         const pm = pA ? vA : vD;
         tbody += `<td class="train-col" rowspan="2"><input class="time-input pass" type="text" data-tid="${t.id}" data-rid="${rIdxArr}" value="${pm}" placeholder="・・" onfocus="this.dataset.old=this.value" onchange="updateTime('${t.id}',${i},'arr',this)"></td>`;
       } else {
-        // 通過時刻（例: 着時刻に「12:30」、発時刻に「レ」）に対応するため、個別のセルとして描画
         tbody += `<td class="train-col"><input class="time-input ${pA?'pass':''}" type="text" data-tid="${t.id}" data-rid="${rIdxArr}" value="${vA}" placeholder="・・" onfocus="this.dataset.old=this.value" onchange="updateTime('${t.id}',${i},'arr',this)"></td>`;
       }
     }); 
@@ -900,11 +968,9 @@ function updateTime(id, stIdx, key, inputEl){
   
   t.times[stIdx][key] = newRaw;
   
-  // 結合セルを空にした場合、もう片方のパス記号もクリアする
   if(key === 'arr' && newRaw === '' && PASS_MARKS.includes(t.times[stIdx].dep)) t.times[stIdx].dep = '';
   if(key === 'dep' && newRaw === '' && PASS_MARKS.includes(t.times[stIdx].arr)) t.times[stIdx].arr = '';
 
-  // 片方が空でパス記号が入力されたら、内部的にもう片方にも自動的にパス記号を埋める
   if(key === 'arr' && PASS_MARKS.includes(newRaw) && t.times[stIdx].dep === '') t.times[stIdx].dep = newRaw;
   if(key === 'dep' && PASS_MARKS.includes(newRaw) && t.times[stIdx].arr === '') t.times[stIdx].arr = newRaw;
 
@@ -919,7 +985,6 @@ function updateTime(id, stIdx, key, inputEl){
   const tid = inputEl.dataset.tid; const rid = inputEl.dataset.rid;
   renderTimetables();
   
-  // 再描画後にフォーカスを復元する
   setTimeout(() => {
     const el = document.querySelector(`#view-${currentView} .time-input[data-tid="${tid}"][data-rid="${rid}"]`);
     if(el) { el.focus(); el.select(); }
@@ -988,8 +1053,6 @@ function drawDiagram(){
 
   const labelMode = document.getElementById('diagramLabelMode') ? document.getElementById('diagramLabelMode').value : 'full';
   const drawnLabels = []; 
-  
-  // 衝突判定用の線分保存配列
   const drawnLines = []; 
 
   trains.forEach(tr=>{
@@ -1007,7 +1070,6 @@ function drawDiagram(){
 
     if(pts.length<2) return;
     
-    // 衝突判定用に線分を保存（同じ駅での到着→出発による停止時間は除外）
     for(let i=0; i<pts.length-1; i++) {
       if(pts[i].y !== pts[i+1].y) {
         drawnLines.push({ train: tr, p1: pts[i], p2: pts[i+1] });
@@ -1047,7 +1109,6 @@ function drawDiagram(){
     }
   });
 
-  // 衝突判定の実行（単線・複線の設定を加味）
   const collisionToggle = document.getElementById('collisionToggle');
   const collisionAlert = document.getElementById('collisionAlert');
   if (collisionToggle && collisionToggle.checked) {
@@ -1058,29 +1119,23 @@ function drawDiagram(){
         const lineA = drawnLines[a];
         const lineB = drawnLines[b];
         
-        // 同じ列車同士は比較しない
         if (lineA.train.id === lineB.train.id) continue;
         
-        // 外積を用いた交差判定（接点は含まないため < 0）
         let ta = (lineB.p1.x - lineB.p2.x) * (lineA.p1.y - lineB.p1.y) + (lineB.p1.y - lineB.p2.y) * (lineB.p1.x - lineA.p1.x);
         let tb = (lineB.p1.x - lineB.p2.x) * (lineA.p2.y - lineB.p1.y) + (lineB.p1.y - lineB.p2.y) * (lineB.p1.x - lineA.p2.x);
         let tc = (lineA.p1.x - lineA.p2.x) * (lineB.p1.y - lineA.p1.y) + (lineA.p1.y - lineA.p2.y) * (lineA.p1.x - lineB.p1.x);
         let td = (lineA.p1.x - lineA.p2.x) * (lineB.p2.y - lineA.p1.y) + (lineA.p1.y - lineA.p2.y) * (lineA.p1.x - lineB.p2.x);
 
-        // 線分同士が交差している場合
         if (tc * td < 0 && ta * tb < 0) {
-          // 交差座標の算出
           const r = Math.abs(ta) / (Math.abs(ta) + Math.abs(tb));
           const crossX = lineA.p1.x + r * (lineA.p2.x - lineA.p1.x);
           const crossY = lineA.p1.y + r * (lineA.p2.y - lineA.p1.y);
           
-          // 交差した駅間の特定と単線/複線の確認
           let crossSt1 = '', crossSt2 = '';
           let trackType = 'single';
           for (let i=0; i<stations.length-1; i++) {
             const y1 = D.paddingTop + i * D.stationH * zoom;
             const y2 = D.paddingTop + (i+1) * D.stationH * zoom;
-            // 交差点が含まれる区間を探す（誤差0.5を許容）
             if (crossY >= y1 - 0.5 && crossY <= y2 + 0.5) {
               crossSt1 = stations[i].name;
               crossSt2 = stations[i+1].name;
@@ -1089,12 +1144,10 @@ function drawDiagram(){
             }
           }
 
-          // 複線区間かつ、進行方向が違う（すれ違い）場合は衝突とみなさない
           if (trackType === 'double' && lineA.train.dir !== lineB.train.dir) {
             continue;
           }
 
-          // 重複を防ぐためのキー
           const key = [lineA.train.id, lineB.train.id].sort().join('-') + '-' + crossSt1 + '-' + crossSt2;
           if (!collisionList.find(c => c.key === key)) {
             collisionList.push({
@@ -1102,7 +1155,6 @@ function drawDiagram(){
             });
           }
 
-          // 交差ポイントに赤いマークを描画
           ctx.fillStyle = 'rgba(220, 38, 38, 0.8)';
           ctx.beginPath(); 
           ctx.arc(crossX, crossY, 6 * zoom, 0, Math.PI*2); 
@@ -1114,7 +1166,6 @@ function drawDiagram(){
       }
     }
     
-    // 警告ポップアップの表示
     if (collisionAlert) {
       if(collisionList.length > 0) {
         let html = `<div style="font-weight:bold; font-size:14px; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.5); padding-bottom:4px; display:flex; justify-content:space-between; align-items:center;"><span>△ 衝突警告 (${collisionList.length}件)</span><button style="background:transparent; border:none; color:#fff; cursor:pointer; font-size:16px;" onclick="document.getElementById('collisionAlert').style.display='none'">✕</button></div><ul style="padding-left:20px; margin:0; font-size:13px; line-height:1.5;">`;
@@ -1171,31 +1222,6 @@ function updateStatusBar(){
   document.getElementById('sb-trains').textContent='列車数: '+(project.trains||[]).length;
 }
 function renderAll(){ renderStations(); renderTimetables(); if(currentView==='diagram') drawDiagram(); }
-
-
-function addTrain(dir) {
-  const newTrain = {
-    id: 't' + Date.now().toString(36),
-    name: '',
-    type: '',
-    dir: dir,
-    color: COLORS[project.trains.filter(t => t.dir === dir).length % COLORS.length],
-    times: project.stations.map(() => ({ arr: '', dep: '' }))
-  };
-  project.trains.push(newTrain);
-  saveProject(true);
-  pushHistory();
-  renderAll();
-}
-
-
-function updateTrain(id, key, val) {
-  const t = project.trains.find(x => x.id === id);
-  if (!t) return;
-  t[key] = val;
-  saveProject(true);
-  pushHistory();
-}
 
 </script>
 </body>
