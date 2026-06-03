@@ -1189,6 +1189,14 @@ function addTrain(dir) {
 }
 
 
+function updateTrain(id, key, val) {
+  const t = project.trains.find(x => x.id === id);
+  if (!t) return;
+  t[key] = val;
+  saveProject(true);
+  pushHistory();
+}
+
 </script>
 </body>
 </html>
