@@ -3,6 +3,7 @@
 <head>
   <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-7NXGM4GVZP"></script>
+<script src="notices.js"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
@@ -328,6 +329,58 @@ input[type=text]:focus { border-color: var(--accent); background: var(--bg); }
 @media (max-width: 375px) {
   .footer-grid { grid-template-columns: 1fr; }
 }
+
+/* ========================================================
+   管理者からのお知らせ
+   ======================================================== */
+
+.notice-box {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  margin-top: 24px;
+  margin-bottom: 80px;
+}
+
+.notice-item {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.notice-item:last-child {
+  border-bottom: none;
+}
+
+.notice-date {
+  font-size: 12px;
+  color: var(--text3);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.notice-text {
+  font-size: 15px;
+  color: var(--text);
+  font-weight: 500;
+  line-height: 1.7;
+  white-space: pre-line; /* ← これを追加すると \n で自動改行されます */
+}
+
+.notice-link {
+  color: var(--accent);
+  text-decoration: none;
+  transition: 0.2s;
+}
+
+.notice-link:hover {
+  text-decoration: underline;
+}
+
+.notice-empty {
+  padding: 18px 22px;
+  font-size: 13px;
+  color: var(--text3);
+  font-weight: 400;
+}
 </style>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -422,6 +475,13 @@ input[type=text]:focus { border-color: var(--accent); background: var(--bg); }
     </div>
   </div>
 
+  <h2 class="category-title" style="margin-top: 80px;">管理者からお知らせ</h2>
+
+  <div class="notice-box" id="noticeBox"></div>
+
+  
+
+
   <h2 class="category-title" style="margin-top: 80px;">その他のプロジェクト</h2>
 
   <div class="swiper mySwiper">
@@ -440,6 +500,8 @@ input[type=text]:focus { border-color: var(--accent); background: var(--bg); }
     <div class="swiper-pagination"></div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <script src="notices.js"></script>
+
 <script>
   const swiper = new Swiper('.mySwiper', {
     loop: true,
@@ -544,6 +606,45 @@ function renderProjects() {
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+
+// ========================================================
+// 管理者からのお知らせを表示
+// ========================================================
+
+function renderNotices() {
+  const container = document.getElementById('noticeBox');
+  if (!container) return;
+
+  // お知らせがない場合
+  if (!Array.isArray(ADMIN_NOTICES) || ADMIN_NOTICES.length === 0) {
+    container.innerHTML = `
+      <div class="notice-empty">
+        現在、お知らせはありません。
+      </div>
+    `;
+    return;
+  }
+
+  // お知らせがある場合
+  container.innerHTML = ADMIN_NOTICES.map(notice => {
+    const date = esc(notice.date || '');
+    const text = esc(notice.text || '');
+    const url = notice.url ? esc(notice.url) : '';
+
+    const textHtml = url
+      ? `<a href="${url}" target="_blank" rel="noopener noreferrer" class="notice-link">${text}</a>`
+      : text;
+
+    return `
+      <div class="notice-item">
+        ${date ? `<div class="notice-date">${date}</div>` : ''}
+        <div class="notice-text">${textHtml}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+
 function openNewModal(){ document.getElementById('newModal').classList.add('show'); document.getElementById('newProjectName').focus(); }
 function closeNewModal(){ document.getElementById('newModal').classList.remove('show'); }
 document.getElementById('newModal').addEventListener('click', e => { if(e.target.classList.contains('modal-overlay')) closeNewModal(); });
@@ -620,6 +721,7 @@ window.addEventListener('pageshow', (event) => {
 });
 
 renderProjects();
+renderNotices();
 </script>
 </body>
 </html>
